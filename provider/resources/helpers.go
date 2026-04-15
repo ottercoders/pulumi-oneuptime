@@ -3,6 +3,7 @@ package resources
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 
 	"github.com/ottercoders/pulumi-oneuptime/provider/client"
@@ -19,6 +20,12 @@ func ToMap(v interface{}) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("marshalling to map: %w", err)
 	}
+
+	if os.Getenv("ONEUPTIME_DEBUG") != "" {
+		fmt.Fprintf(os.Stderr, "[oneuptime] ToMap input type=%T value=%+v\n", v, v)
+		fmt.Fprintf(os.Stderr, "[oneuptime] ToMap json=%s\n", string(data))
+	}
+
 	var result map[string]interface{}
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, fmt.Errorf("unmarshalling to map: %w", err)
