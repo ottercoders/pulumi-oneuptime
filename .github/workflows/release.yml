@@ -108,7 +108,7 @@ jobs:
           cp README.md bin/ 2>/dev/null || true
           cp pulumi-plugin.json bin/ 2>/dev/null || true
           cd bin
-          jq '.name = "@ottercoders/pulumi-oneuptime" | .version = "${{ env.VERSION }}" | . + {"main": "index.js", "types": "index.d.ts"}' package.json > tmp.json && mv tmp.json package.json
+          jq '.name = "@ottercoders/pulumi-oneuptime" | .version = "${{ env.VERSION }}" | . + {"main": "index.js", "types": "index.d.ts", "repository": {"type": "git", "url": "https://github.com/ottercoders/pulumi-oneuptime"}}' package.json > tmp.json && mv tmp.json package.json
 
       - name: Pack Node.js SDK
         working-directory: sdk/nodejs/nodejs/bin
