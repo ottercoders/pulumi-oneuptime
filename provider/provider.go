@@ -35,6 +35,7 @@ func Provider() p.Provider {
 			infer.Resource[*resources.OnCallDutyPolicyEscalationRule, resources.OnCallDutyPolicyEscalationRuleArgs, resources.OnCallDutyPolicyEscalationRuleState](&resources.OnCallDutyPolicyEscalationRule{}),
 			infer.Resource[*resources.OnCallDutyPolicySchedule, resources.OnCallDutyPolicyScheduleArgs, resources.OnCallDutyPolicyScheduleState](&resources.OnCallDutyPolicySchedule{}),
 			infer.Resource[*resources.OnCallDutyPolicyEscalationRuleSchedule, resources.OnCallDutyPolicyEscalationRuleScheduleArgs, resources.OnCallDutyPolicyEscalationRuleScheduleState](&resources.OnCallDutyPolicyEscalationRuleSchedule{}),
+			infer.Resource[*resources.ProjectSSO, resources.ProjectSSOArgs, resources.ProjectSSOState](&resources.ProjectSSO{}),
 		).
 		Build()
 	if err != nil {
