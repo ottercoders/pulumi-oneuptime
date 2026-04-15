@@ -30,6 +30,11 @@ func Provider() p.Provider {
 			infer.Resource[*resources.AlertState, resources.AlertStateArgs, resources.AlertStateState](&resources.AlertState{}),
 			infer.Resource[*resources.AlertSeverity, resources.AlertSeverityArgs, resources.AlertSeverityState](&resources.AlertSeverity{}),
 			infer.Resource[*resources.Project, resources.ProjectArgs, resources.ProjectState](&resources.Project{}),
+			infer.Resource[*resources.StatusPageGroup, resources.StatusPageGroupArgs, resources.StatusPageGroupState](&resources.StatusPageGroup{}),
+			infer.Resource[*resources.StatusPageResource, resources.StatusPageResourceArgs, resources.StatusPageResourceState](&resources.StatusPageResource{}),
+			infer.Resource[*resources.OnCallDutyPolicyEscalationRule, resources.OnCallDutyPolicyEscalationRuleArgs, resources.OnCallDutyPolicyEscalationRuleState](&resources.OnCallDutyPolicyEscalationRule{}),
+			infer.Resource[*resources.OnCallDutyPolicySchedule, resources.OnCallDutyPolicyScheduleArgs, resources.OnCallDutyPolicyScheduleState](&resources.OnCallDutyPolicySchedule{}),
+			infer.Resource[*resources.OnCallDutyPolicyEscalationRuleSchedule, resources.OnCallDutyPolicyEscalationRuleScheduleArgs, resources.OnCallDutyPolicyEscalationRuleScheduleState](&resources.OnCallDutyPolicyEscalationRuleSchedule{}),
 		).
 		Build()
 	if err != nil {

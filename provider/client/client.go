@@ -112,7 +112,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("executing request: %w", err)
+		return nil, fmt.Errorf("%s %s: %w", method, url, err)
 	}
 	defer resp.Body.Close()
 
