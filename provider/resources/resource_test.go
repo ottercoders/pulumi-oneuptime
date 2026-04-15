@@ -348,7 +348,7 @@ func TestTeamResource_ApiKeyHeader(t *testing.T) {
 
 	var capturedAPIKey string
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		capturedAPIKey = r.Header.Get("ApiKey")
+		capturedAPIKey = r.Header.Get("APIKey")
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"_id":       "team-abc123",

@@ -16,8 +16,8 @@ func TestCreateResource(t *testing.T) {
 		if r.URL.Path != "/api/team" {
 			t.Errorf("expected /api/team, got %s", r.URL.Path)
 		}
-		if r.Header.Get("ApiKey") != "test-key" {
-			t.Errorf("expected ApiKey header 'test-key', got '%s'", r.Header.Get("ApiKey"))
+		if r.Header.Get("APIKey") != "test-key" {
+			t.Errorf("expected APIKey header 'test-key', got '%s'", r.Header.Get("APIKey"))
 		}
 		if r.Header.Get("Content-Type") != "application/json" {
 			t.Errorf("expected Content-Type application/json, got '%s'", r.Header.Get("Content-Type"))

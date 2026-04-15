@@ -108,7 +108,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Set("ApiKey", c.APIKey)
+	req.Header.Set("APIKey", c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	debug := os.Getenv("ONEUPTIME_DEBUG") != ""
