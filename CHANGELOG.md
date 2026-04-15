@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.1.6...v0.2.0) (2026-04-15)
+
+
+### Features
+
+* add pluginDownloadURL for automatic provider binary download ([e69314e](https://github.com/ottercoders/pulumi-oneuptime/commit/e69314eeb107b385badd49545a87432d196de69e))
+* add StatusPageGroup, StatusPageResource, and on-call escalation resources ([7d8db73](https://github.com/ottercoders/pulumi-oneuptime/commit/7d8db730ac8dd0f2210d880d74afb628f49388c8))
+* **config:** add configurable HTTP timeout ([50f3d1d](https://github.com/ottercoders/pulumi-oneuptime/commit/50f3d1d3de17e78dcd78303fbf0c8207dfbbe253))
+
 ## [0.1.2](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.1.1...v0.1.2) (2026-04-15)
 
 
