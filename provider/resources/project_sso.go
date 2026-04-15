@@ -9,14 +9,17 @@ import (
 type ProjectSSO struct{}
 
 type ProjectSSOArgs struct {
-	ProjectID    *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
-	Name         string  `pulumi:"name" json:"name"`
-	Description  *string `pulumi:"description,optional" json:"description,omitempty"`
-	SignOnURL    string  `pulumi:"signOnUrl" json:"signOnUrl"`
-	IssuerURL    *string `pulumi:"issuerUrl,optional" json:"issuerUrl,omitempty"`
-	ClientID     *string `pulumi:"clientId,optional" json:"clientId,omitempty"`
-	ClientSecret *string `pulumi:"clientSecret,optional" json:"clientSecret,omitempty"`
-	IsSaml       *bool   `pulumi:"isSaml,optional" json:"isSaml,omitempty"`
+	ProjectID          *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
+	Name               string  `pulumi:"name" json:"name"`
+	Description        *string `pulumi:"description,optional" json:"description,omitempty"`
+	SignOnURL          *string `pulumi:"signOnURL,optional" json:"signOnURL,omitempty"`
+	IssuerURL          *string `pulumi:"issuerURL,optional" json:"issuerURL,omitempty"`
+	SsoType            *string `pulumi:"ssoType,optional" json:"ssoType,omitempty"`
+	IsEnabled          *bool   `pulumi:"isEnabled,optional" json:"isEnabled,omitempty"`
+	IsSaml             *bool   `pulumi:"isSaml,optional" json:"isSaml,omitempty"`
+	OidcDiscoveryURL   *string `pulumi:"oidcDiscoveryUrl,optional" json:"oidcDiscoveryUrl,omitempty"`
+	OidcClientID       *string `pulumi:"oidcClientId,optional" json:"oidcClientId,omitempty"`
+	OidcClientSecret   *string `pulumi:"oidcClientSecret,optional" json:"oidcClientSecret,omitempty"`
 }
 
 type ProjectSSOState struct {
