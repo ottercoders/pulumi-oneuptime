@@ -68,14 +68,14 @@ name: oneuptime-example
 runtime: yaml
 resources:
   engineering-team:
-    type: oneuptime:index:Team
+    type: oneuptime:resources:Team
     properties:
       projectId: ${projectId}
       name: Engineering
       description: Engineering team managed by Pulumi
 
   api-monitor:
-    type: oneuptime:index:Monitor
+    type: oneuptime:resources:Monitor
     properties:
       projectId: ${projectId}
       name: API Health Check
@@ -83,7 +83,7 @@ resources:
       currentMonitorStatusId: ${monitorStatusId}
 
   status-page:
-    type: oneuptime:index:StatusPage
+    type: oneuptime:resources:StatusPage
     properties:
       projectId: ${projectId}
       name: Public Status
@@ -97,13 +97,13 @@ resources:
 ```typescript
 import * as oneuptime from "@ottercoders/pulumi-oneuptime";
 
-const team = new oneuptime.Team("engineering", {
+const team = new oneuptime.resources.Team("engineering", {
     projectId: "your-project-id",
     name: "Engineering",
     description: "Engineering team",
 });
 
-const monitor = new oneuptime.Monitor("api-health", {
+const monitor = new oneuptime.resources.Monitor("api-health", {
     projectId: "your-project-id",
     name: "API Health Check",
     monitorType: "API",
@@ -114,15 +114,15 @@ const monitor = new oneuptime.Monitor("api-health", {
 ### Python
 
 ```python
-import pulumi_oneuptime as oneuptime
+from pulumi_oneuptime import resources
 
-team = oneuptime.Team("engineering",
+team = resources.Team("engineering",
     project_id="your-project-id",
     name="Engineering",
     description="Engineering team",
 )
 
-monitor = oneuptime.Monitor("api-health",
+monitor = resources.Monitor("api-health",
     project_id="your-project-id",
     name="API Health Check",
     monitor_type="API",
@@ -142,8 +142,9 @@ monitor = oneuptime.Monitor("api-health",
 ```bash
 make provider    # Build the provider binary
 make install     # Install to $GOPATH/bin
-make test        # Run unit tests
 make schema      # Generate schema.json
+make sdk         # Generate SDKs (Go, Node.js, Python, .NET)
+make test        # Run unit tests
 make lint        # Run linter
 make clean       # Remove build artifacts
 ```

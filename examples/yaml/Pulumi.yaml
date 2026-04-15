@@ -9,14 +9,14 @@ config:
 
 resources:
   engineering-team:
-    type: oneuptime:index:Team
+    type: oneuptime:resources:Team
     properties:
       projectId: ${projectId}
       name: Engineering
       description: Engineering team managed by Pulumi
 
   api-monitor:
-    type: oneuptime:index:Monitor
+    type: oneuptime:resources:Monitor
     properties:
       projectId: ${projectId}
       name: API Health Check
@@ -25,7 +25,7 @@ resources:
       currentMonitorStatusId: ${monitorStatusId}
 
   public-status-page:
-    type: oneuptime:index:StatusPage
+    type: oneuptime:resources:StatusPage
     properties:
       projectId: ${projectId}
       name: Public Status
@@ -35,6 +35,6 @@ resources:
       showIncidentHistoryInDays: 14
 
 outputs:
-  teamId: ${engineering-team.id}
-  monitorId: ${api-monitor.id}
-  statusPageId: ${public-status-page.id}
+  teamId: ${engineering-team.resourceId}
+  monitorId: ${api-monitor.resourceId}
+  statusPageId: ${public-status-page.resourceId}

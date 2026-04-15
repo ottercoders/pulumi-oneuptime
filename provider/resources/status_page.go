@@ -22,7 +22,7 @@ type StatusPageArgs struct {
 
 type StatusPageState struct {
 	StatusPageArgs
-	ID        string `pulumi:"id" json:"_id"`
+	ResourceID string `pulumi:"resourceId" json:"_id"`
 	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
 	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
 	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
@@ -71,7 +71,7 @@ func (s *StatusPage) Create(ctx context.Context, req infer.CreateRequest[StatusP
 	}
 
 	return infer.CreateResponse[StatusPageState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Output: state,
 	}, nil
 }
@@ -94,7 +94,7 @@ func (s *StatusPage) Read(ctx context.Context, req infer.ReadRequest[StatusPageA
 	}
 
 	return infer.ReadResponse[StatusPageArgs, StatusPageState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Inputs: state.StatusPageArgs,
 		State:  state,
 	}, nil
@@ -106,7 +106,7 @@ func (s *StatusPage) Update(ctx context.Context, req infer.UpdateRequest[StatusP
 
 	if req.DryRun {
 		return infer.UpdateResponse[StatusPageState]{
-			Output: StatusPageState{StatusPageArgs: req.Inputs, ID: req.ID},
+			Output: StatusPageState{StatusPageArgs: req.Inputs, ResourceID: req.ID},
 		}, nil
 	}
 

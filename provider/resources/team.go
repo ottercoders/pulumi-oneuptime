@@ -16,7 +16,7 @@ type TeamArgs struct {
 
 type TeamState struct {
 	TeamArgs
-	ID        string `pulumi:"id" json:"_id"`
+	ResourceID string `pulumi:"resourceId" json:"_id"`
 	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
 	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
 	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
@@ -65,7 +65,7 @@ func (t *Team) Create(ctx context.Context, req infer.CreateRequest[TeamArgs]) (i
 	}
 
 	return infer.CreateResponse[TeamState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Output: state,
 	}, nil
 }
@@ -88,7 +88,7 @@ func (t *Team) Read(ctx context.Context, req infer.ReadRequest[TeamArgs, TeamSta
 	}
 
 	return infer.ReadResponse[TeamArgs, TeamState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Inputs: state.TeamArgs,
 		State:  state,
 	}, nil
@@ -100,7 +100,7 @@ func (t *Team) Update(ctx context.Context, req infer.UpdateRequest[TeamArgs, Tea
 
 	if req.DryRun {
 		return infer.UpdateResponse[TeamState]{
-			Output: TeamState{TeamArgs: req.Inputs, ID: req.ID},
+			Output: TeamState{TeamArgs: req.Inputs, ResourceID: req.ID},
 		}, nil
 	}
 

@@ -20,7 +20,7 @@ type MonitorArgs struct {
 
 type MonitorState struct {
 	MonitorArgs
-	ID        string `pulumi:"id" json:"_id"`
+	ResourceID string `pulumi:"resourceId" json:"_id"`
 	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
 	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
 	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
@@ -69,7 +69,7 @@ func (m *Monitor) Create(ctx context.Context, req infer.CreateRequest[MonitorArg
 	}
 
 	return infer.CreateResponse[MonitorState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Output: state,
 	}, nil
 }
@@ -92,7 +92,7 @@ func (m *Monitor) Read(ctx context.Context, req infer.ReadRequest[MonitorArgs, M
 	}
 
 	return infer.ReadResponse[MonitorArgs, MonitorState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Inputs: state.MonitorArgs,
 		State:  state,
 	}, nil
@@ -104,7 +104,7 @@ func (m *Monitor) Update(ctx context.Context, req infer.UpdateRequest[MonitorArg
 
 	if req.DryRun {
 		return infer.UpdateResponse[MonitorState]{
-			Output: MonitorState{MonitorArgs: req.Inputs, ID: req.ID},
+			Output: MonitorState{MonitorArgs: req.Inputs, ResourceID: req.ID},
 		}, nil
 	}
 

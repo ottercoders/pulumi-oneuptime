@@ -18,7 +18,7 @@ type OnCallDutyPolicyArgs struct {
 
 type OnCallDutyPolicyState struct {
 	OnCallDutyPolicyArgs
-	ID        string `pulumi:"id" json:"_id"`
+	ResourceID string `pulumi:"resourceId" json:"_id"`
 	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
 	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
 	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
@@ -67,7 +67,7 @@ func (o *OnCallDutyPolicy) Create(ctx context.Context, req infer.CreateRequest[O
 	}
 
 	return infer.CreateResponse[OnCallDutyPolicyState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Output: state,
 	}, nil
 }
@@ -90,7 +90,7 @@ func (o *OnCallDutyPolicy) Read(ctx context.Context, req infer.ReadRequest[OnCal
 	}
 
 	return infer.ReadResponse[OnCallDutyPolicyArgs, OnCallDutyPolicyState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Inputs: state.OnCallDutyPolicyArgs,
 		State:  state,
 	}, nil
@@ -102,7 +102,7 @@ func (o *OnCallDutyPolicy) Update(ctx context.Context, req infer.UpdateRequest[O
 
 	if req.DryRun {
 		return infer.UpdateResponse[OnCallDutyPolicyState]{
-			Output: OnCallDutyPolicyState{OnCallDutyPolicyArgs: req.Inputs, ID: req.ID},
+			Output: OnCallDutyPolicyState{OnCallDutyPolicyArgs: req.Inputs, ResourceID: req.ID},
 		}, nil
 	}
 

@@ -19,7 +19,7 @@ type IncidentArgs struct {
 
 type IncidentState struct {
 	IncidentArgs
-	ID             string `pulumi:"id" json:"_id"`
+	ResourceID     string `pulumi:"resourceId" json:"_id"`
 	Slug           string `pulumi:"slug,optional" json:"slug,omitempty"`
 	IncidentNumber *int   `pulumi:"incidentNumber,optional" json:"incidentNumber,omitempty"`
 	CreatedAt      string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
@@ -69,7 +69,7 @@ func (i *Incident) Create(ctx context.Context, req infer.CreateRequest[IncidentA
 	}
 
 	return infer.CreateResponse[IncidentState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Output: state,
 	}, nil
 }
@@ -92,7 +92,7 @@ func (i *Incident) Read(ctx context.Context, req infer.ReadRequest[IncidentArgs,
 	}
 
 	return infer.ReadResponse[IncidentArgs, IncidentState]{
-		ID:     state.ID,
+		ID:     state.ResourceID,
 		Inputs: state.IncidentArgs,
 		State:  state,
 	}, nil
@@ -104,7 +104,7 @@ func (i *Incident) Update(ctx context.Context, req infer.UpdateRequest[IncidentA
 
 	if req.DryRun {
 		return infer.UpdateResponse[IncidentState]{
-			Output: IncidentState{IncidentArgs: req.Inputs, ID: req.ID},
+			Output: IncidentState{IncidentArgs: req.Inputs, ResourceID: req.ID},
 		}, nil
 	}
 
