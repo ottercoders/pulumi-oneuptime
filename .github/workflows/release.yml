@@ -74,11 +74,6 @@ jobs:
       - name: Add README to Node.js SDK
         run: cp README.md sdk/nodejs/nodejs/README.md
 
-      - name: Set npm package version and scope
-        working-directory: sdk/nodejs/nodejs
-        run: |
-          jq '.name = "@ottercoders/pulumi-oneuptime" | .version = "${{ env.VERSION }}"' package.json > tmp.json && mv tmp.json package.json
-
       - name: Build Node.js SDK
         working-directory: sdk/nodejs/nodejs
         run: |
@@ -88,14 +83,11 @@ jobs:
       - name: Prepare npm package
         working-directory: sdk/nodejs/nodejs
         run: |
-          # Copy package metadata into the compiled bin/ output
           cp package.json bin/
           cp README.md bin/ 2>/dev/null || true
-          # Set main entry point and types
+          cp pulumi-plugin.json bin/ 2>/dev/null || true
           cd bin
-          jq '. + {"main": "index.js", "types": "index.d.ts"}' package.json > tmp.json && mv tmp.json package.json
-          # Copy pulumi-plugin.json if it exists
-          cp ../pulumi-plugin.json . 2>/dev/null || true
+          jq '.name = "@ottercoders/pulumi-oneuptime" | .version = "${{ env.VERSION }}" | . + {"main": "index.js", "types": "index.d.ts"}' package.json > tmp.json && mv tmp.json package.json
 
       - name: Pack Node.js SDK
         working-directory: sdk/nodejs/nodejs/bin
@@ -103,7 +95,9 @@ jobs:
 
       - name: Publish Node.js SDK
         working-directory: sdk/nodejs/nodejs/bin
-        run: npm publish --access public --provenance
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Upload npm artifact
         uses: actions/upload-artifact@v4
