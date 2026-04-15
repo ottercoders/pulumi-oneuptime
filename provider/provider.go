@@ -15,6 +15,7 @@ func Provider() p.Provider {
 	prov, err := infer.NewProviderBuilder().
 		WithDisplayName("OneUptime").
 		WithDescription("Manage OneUptime monitoring resources").
+		WithPluginDownloadURL("github://api.github.com/ottercoders/pulumi-oneuptime").
 		WithConfig(infer.Config[*resources.Config](&resources.Config{})).
 		WithResources(
 			infer.Resource[*resources.Team, resources.TeamArgs, resources.TeamState](&resources.Team{}),
