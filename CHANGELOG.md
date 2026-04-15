@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.3.0...v0.3.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ci:** add repository.url to npm package.json for provenance ([cb718b1](https://github.com/ottercoders/pulumi-oneuptime/commit/cb718b1d0c8d66d5450fbf208b2315b393715d11))
+* **ci:** inline release jobs into release-please workflow ([fdb98f9](https://github.com/ottercoders/pulumi-oneuptime/commit/fdb98f9536833ecde548debce88da55f60782bb3))
+
 ## [0.3.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.2.1...v0.3.0) (2026-04-15)
 
 
