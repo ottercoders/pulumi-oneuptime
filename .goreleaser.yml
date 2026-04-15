@@ -1,0 +1,22 @@
+version: 2
+
+builds:
+  - id: pulumi-resource-oneuptime
+    dir: provider/cmd/pulumi-resource-oneuptime
+    binary: pulumi-resource-oneuptime
+    ldflags:
+      - -X github.com/ottercoders/pulumi-oneuptime/provider.Version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: archive
+    name_template: "{{ .Binary }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+changelog:
+  sort: asc

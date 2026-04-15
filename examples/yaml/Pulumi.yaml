@@ -1,0 +1,40 @@
+name: oneuptime-example
+runtime: yaml
+description: Example OneUptime provider usage
+
+config:
+  projectId:
+    type: string
+    description: OneUptime Project ID
+
+resources:
+  engineering-team:
+    type: oneuptime:index:Team
+    properties:
+      projectId: ${projectId}
+      name: Engineering
+      description: Engineering team managed by Pulumi
+
+  api-monitor:
+    type: oneuptime:index:Monitor
+    properties:
+      projectId: ${projectId}
+      name: API Health Check
+      description: Monitors API availability
+      monitorType: API
+      currentMonitorStatusId: ${monitorStatusId}
+
+  public-status-page:
+    type: oneuptime:index:StatusPage
+    properties:
+      projectId: ${projectId}
+      name: Public Status
+      pageTitle: Service Status
+      pageDescription: Current status of our services
+      isPublicStatusPage: true
+      showIncidentHistoryInDays: 14
+
+outputs:
+  teamId: ${engineering-team.id}
+  monitorId: ${api-monitor.id}
+  statusPageId: ${public-status-page.id}
