@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 type Client struct {
@@ -110,6 +111,11 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 	req.Header.Set("ApiKey", c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
+	debug := os.Getenv("ONEUPTIME_DEBUG") != ""
+	if debug {
+		fmt.Fprintf(os.Stderr, "[oneuptime] %s %s body=%s\n", method, url, string(body))
+	}
+
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", method, url, err)
@@ -119,6 +125,10 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading response body: %w", err)
+	}
+
+	if debug {
+		fmt.Fprintf(os.Stderr, "[oneuptime] response status=%d body=%s\n", resp.StatusCode, string(respBody))
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
