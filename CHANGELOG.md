@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.3.3...v0.3.4) (2026-04-15)
+
+
+### Bug Fixes
+
+* **client:** use correct API key header name (APIKey not ApiKey) ([b9a1bef](https://github.com/ottercoders/pulumi-oneuptime/commit/b9a1befa5b9abacb06723a79a1a0d1407b10486e))
+* **client:** wrap create/update bodies in {"data": ...} envelope ([d0cc729](https://github.com/ottercoders/pulumi-oneuptime/commit/d0cc729b3543af8565acd5480a0b4da6886eab66))
+* unwrap OneUptime typed objects (DateTime, ObjectID) in API responses ([6d17f23](https://github.com/ottercoders/pulumi-oneuptime/commit/6d17f23114e306fc21c39f656a5650c0c7ed29b2))
+* use tenantid header for project scoping and add name to escalation rules ([7e8ea2e](https://github.com/ottercoders/pulumi-oneuptime/commit/7e8ea2e2cd9820fe8396c59237091e1bdbb13b99))
+
 ## [0.3.3](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.3.2...v0.3.3) (2026-04-15)
 
 
