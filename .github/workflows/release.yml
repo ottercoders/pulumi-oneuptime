@@ -85,19 +85,31 @@ jobs:
           npm install
           npm run build
 
-      - name: Pack Node.js SDK
+      - name: Prepare npm package
         working-directory: sdk/nodejs/nodejs
+        run: |
+          # Copy package metadata into the compiled bin/ output
+          cp package.json bin/
+          cp README.md bin/ 2>/dev/null || true
+          # Set main entry point and types
+          cd bin
+          jq '. + {"main": "index.js", "types": "index.d.ts"}' package.json > tmp.json && mv tmp.json package.json
+          # Copy pulumi-plugin.json if it exists
+          cp ../pulumi-plugin.json . 2>/dev/null || true
+
+      - name: Pack Node.js SDK
+        working-directory: sdk/nodejs/nodejs/bin
         run: npm pack
 
       - name: Publish Node.js SDK
-        working-directory: sdk/nodejs/nodejs
+        working-directory: sdk/nodejs/nodejs/bin
         run: npm publish --access public --provenance
 
       - name: Upload npm artifact
         uses: actions/upload-artifact@v4
         with:
           name: npm-package
-          path: sdk/nodejs/nodejs/*.tgz
+          path: sdk/nodejs/nodejs/bin/*.tgz
 
   # ── Publish Python SDK to PyPI (trusted publishing) ──
   publish-pypi:
