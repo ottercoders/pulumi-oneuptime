@@ -15,6 +15,7 @@ type Config struct {
 	ApiKey    string  `pulumi:"apiKey,optional"`
 	BaseURL   *string `pulumi:"baseUrl,optional"`
 	ProjectID *string `pulumi:"projectId,optional"`
+	Timeout   *int    `pulumi:"timeout,optional"`
 
 	client *client.Client
 }
@@ -26,6 +27,7 @@ func (c *Config) Annotate(a infer.Annotator) {
 	a.Describe(&c.ApiKey, "The API key for authenticating with OneUptime. Can also be set via ONEUPTIME_API_KEY env var.")
 	a.Describe(&c.BaseURL, "The base URL of the OneUptime instance. Defaults to https://oneuptime.com. Can also be set via ONEUPTIME_BASE_URL env var.")
 	a.Describe(&c.ProjectID, "The default project ID for resources. Can also be set via ONEUPTIME_PROJECT_ID env var.")
+	a.Describe(&c.Timeout, "HTTP request timeout in seconds. Defaults to 30.")
 }
 
 func (c *Config) Configure(ctx context.Context) error {
@@ -49,11 +51,16 @@ func (c *Config) Configure(ctx context.Context) error {
 		}
 	}
 
+	timeout := 30
+	if c.Timeout != nil && *c.Timeout > 0 {
+		timeout = *c.Timeout
+	}
+
 	c.client = &client.Client{
 		BaseURL: baseURL,
 		APIKey:  c.ApiKey,
 		HTTPClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 		},
 	}
 
