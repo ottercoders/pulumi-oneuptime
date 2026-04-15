@@ -17,9 +17,9 @@ type TeamArgs struct {
 type TeamState struct {
 	TeamArgs
 	ResourceID string `pulumi:"resourceId" json:"_id"`
-	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
-	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
-	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
+	Slug       string `pulumi:"slug,optional" json:"slug,omitempty"`
+	CreatedAt  string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
+	UpdatedAt  string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
 }
 
 var _ infer.Annotated = (*Team)(nil)

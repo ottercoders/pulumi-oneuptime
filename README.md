@@ -51,6 +51,8 @@ export ONEUPTIME_PROJECT_ID="your-project-id"
 
 ## Resources
 
+All resources (except `Project`) accept an optional `projectId` property. When omitted, the provider-level `projectId` config is used. Every resource exposes `resourceId`, `slug`, `createdAt`, and `updatedAt` as outputs.
+
 | Resource             | Description                              |
 |----------------------|------------------------------------------|
 | `Team`               | Manages teams within a project           |
@@ -58,6 +60,131 @@ export ONEUPTIME_PROJECT_ID="your-project-id"
 | `StatusPage`         | Manages public/private status pages      |
 | `Incident`           | Manages incidents                        |
 | `OnCallDutyPolicy`   | Manages on-call duty escalation policies |
+| `Label`              | Manages labels for categorizing resources |
+| `MonitorGroup`       | Manages logical groupings of monitors    |
+| `IncidentState`      | Manages incident workflow states (e.g. Created, Acknowledged, Resolved) |
+| `IncidentSeverity`   | Manages incident severity levels (e.g. Critical, Major, Minor) |
+| `AlertState`         | Manages alert workflow states            |
+| `AlertSeverity`      | Manages alert severity levels            |
+| `Project`            | Manages OneUptime projects               |
+
+### Resource Properties
+
+#### Team
+
+| Property      | Type   | Required | Description          |
+|---------------|--------|----------|----------------------|
+| `name`        | string | Yes      | Team name            |
+| `description` | string | No       | Team description     |
+
+#### Monitor
+
+| Property                    | Type   | Required | Description                        |
+|-----------------------------|--------|----------|------------------------------------|
+| `name`                      | string | Yes      | Monitor name                       |
+| `monitorType`               | string | Yes      | Type of monitor (e.g. API, Website)|
+| `currentMonitorStatusId`    | string | Yes      | ID of the current monitor status   |
+| `description`               | string | No       | Monitor description                |
+| `disableActiveMonitoring`   | bool   | No       | Disable active monitoring          |
+| `monitoringInterval`        | string | No       | Monitoring check interval          |
+
+#### StatusPage
+
+| Property                            | Type   | Required | Description                       |
+|-------------------------------------|--------|----------|-----------------------------------|
+| `name`                              | string | Yes      | Status page name                  |
+| `description`                       | string | No       | Status page description           |
+| `pageTitle`                         | string | No       | HTML page title                   |
+| `pageDescription`                   | string | No       | Page description text             |
+| `isPublicStatusPage`                | bool   | No       | Whether the page is public        |
+| `showIncidentHistoryInDays`         | int    | No       | Days of incident history to show  |
+| `showAnnouncementHistoryInDays`     | int    | No       | Days of announcement history      |
+| `showScheduledEventHistoryInDays`   | int    | No       | Days of scheduled event history   |
+
+#### Incident
+
+| Property                  | Type   | Required | Description                     |
+|---------------------------|--------|----------|---------------------------------|
+| `title`                   | string | Yes      | Incident title                  |
+| `currentIncidentStateId`  | string | Yes      | ID of the current state         |
+| `incidentSeverityId`      | string | Yes      | ID of the severity level        |
+| `description`             | string | No       | Incident description            |
+| `declaredAt`              | string | No       | When the incident was declared  |
+
+#### OnCallDutyPolicy
+
+| Property                                      | Type   | Required | Description                              |
+|-----------------------------------------------|--------|----------|------------------------------------------|
+| `name`                                        | string | Yes      | Policy name                              |
+| `description`                                 | string | No       | Policy description                       |
+| `repeatPolicyIfNoOneAcknowledges`             | bool   | No       | Repeat if no acknowledgement             |
+| `repeatPolicyIfNoOneAcknowledgesNoOfTimes`    | int    | No       | Number of times to repeat                |
+
+#### Label
+
+| Property      | Type   | Required | Description                          |
+|---------------|--------|----------|--------------------------------------|
+| `name`        | string | Yes      | Label name                           |
+| `color`       | string | Yes      | Hex color code (e.g. `#e74c3c`)     |
+| `description` | string | No       | Label description                    |
+
+#### MonitorGroup
+
+| Property      | Type   | Required | Description               |
+|---------------|--------|----------|---------------------------|
+| `name`        | string | Yes      | Group name                |
+| `description` | string | No       | Group description         |
+
+#### IncidentState
+
+| Property              | Type   | Required | Description                        |
+|-----------------------|--------|----------|------------------------------------|
+| `name`                | string | Yes      | State name                         |
+| `color`               | string | Yes      | Hex color code                     |
+| `description`         | string | No       | State description                  |
+| `isCreatedState`      | bool   | No       | Mark as the initial created state  |
+| `isAcknowledgedState` | bool   | No       | Mark as the acknowledged state     |
+| `isResolvedState`     | bool   | No       | Mark as the resolved state         |
+| `order`               | int    | No       | Display order                      |
+
+#### IncidentSeverity
+
+| Property      | Type   | Required | Description                    |
+|---------------|--------|----------|--------------------------------|
+| `name`        | string | Yes      | Severity name                  |
+| `color`       | string | Yes      | Hex color code                 |
+| `description` | string | No       | Severity description           |
+| `order`       | int    | No       | Display order (1 = most severe)|
+
+#### AlertState
+
+| Property              | Type   | Required | Description                        |
+|-----------------------|--------|----------|------------------------------------|
+| `name`                | string | Yes      | State name                         |
+| `color`               | string | Yes      | Hex color code                     |
+| `description`         | string | No       | State description                  |
+| `isCreatedState`      | bool   | No       | Mark as the initial created state  |
+| `isAcknowledgedState` | bool   | No       | Mark as the acknowledged state     |
+| `isResolvedState`     | bool   | No       | Mark as the resolved state         |
+| `order`               | int    | No       | Display order                      |
+
+#### AlertSeverity
+
+| Property      | Type   | Required | Description                    |
+|---------------|--------|----------|--------------------------------|
+| `name`        | string | Yes      | Severity name                  |
+| `color`       | string | Yes      | Hex color code                 |
+| `description` | string | No       | Severity description           |
+| `order`       | int    | No       | Display order (1 = most severe)|
+
+#### Project
+
+| Property      | Type   | Required | Description            |
+|---------------|--------|----------|------------------------|
+| `name`        | string | Yes      | Project name           |
+| `description` | string | No       | Project description    |
+
+> **Note:** The `Project` resource does not accept a `projectId` property since it represents the project itself.
 
 ## Example
 
@@ -70,14 +197,12 @@ resources:
   engineering-team:
     type: oneuptime:resources:Team
     properties:
-      projectId: ${projectId}
       name: Engineering
       description: Engineering team managed by Pulumi
 
   api-monitor:
     type: oneuptime:resources:Monitor
     properties:
-      projectId: ${projectId}
       name: API Health Check
       monitorType: API
       currentMonitorStatusId: ${monitorStatusId}
@@ -85,11 +210,31 @@ resources:
   status-page:
     type: oneuptime:resources:StatusPage
     properties:
-      projectId: ${projectId}
       name: Public Status
       pageTitle: Service Status
       isPublicStatusPage: true
       showIncidentHistoryInDays: 14
+
+  env-label:
+    type: oneuptime:resources:Label
+    properties:
+      name: production
+      color: "#e74c3c"
+      description: Production environment
+
+  api-monitors:
+    type: oneuptime:resources:MonitorGroup
+    properties:
+      name: API Monitors
+      description: All API health check monitors
+
+  critical-severity:
+    type: oneuptime:resources:IncidentSeverity
+    properties:
+      name: Critical
+      color: "#e74c3c"
+      description: Service is completely down
+      order: 1
 ```
 
 ### TypeScript
@@ -98,16 +243,21 @@ resources:
 import * as oneuptime from "@ottercoders/pulumi-oneuptime";
 
 const team = new oneuptime.resources.Team("engineering", {
-    projectId: "your-project-id",
     name: "Engineering",
     description: "Engineering team",
 });
 
-const monitor = new oneuptime.resources.Monitor("api-health", {
-    projectId: "your-project-id",
-    name: "API Health Check",
-    monitorType: "API",
-    currentMonitorStatusId: "your-status-id",
+const label = new oneuptime.resources.Label("production", {
+    name: "production",
+    color: "#e74c3c",
+    description: "Production environment",
+});
+
+const severity = new oneuptime.resources.IncidentSeverity("critical", {
+    name: "Critical",
+    color: "#e74c3c",
+    description: "Service is completely down",
+    order: 1,
 });
 ```
 
@@ -117,16 +267,21 @@ const monitor = new oneuptime.resources.Monitor("api-health", {
 from pulumi_oneuptime import resources
 
 team = resources.Team("engineering",
-    project_id="your-project-id",
     name="Engineering",
     description="Engineering team",
 )
 
-monitor = resources.Monitor("api-health",
-    project_id="your-project-id",
-    name="API Health Check",
-    monitor_type="API",
-    current_monitor_status_id="your-status-id",
+label = resources.Label("production",
+    name="production",
+    color="#e74c3c",
+    description="Production environment",
+)
+
+severity = resources.IncidentSeverity("critical",
+    name="Critical",
+    color="#e74c3c",
+    description="Service is completely down",
+    order=1,
 )
 ```
 
@@ -134,7 +289,7 @@ monitor = resources.Monitor("api-health",
 
 ### Prerequisites
 
-- [Go](https://golang.org/dl/) 1.22+
+- [Go](https://golang.org/dl/) 1.25+
 - [Pulumi CLI](https://www.pulumi.com/docs/install/)
 
 ### Build

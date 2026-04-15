@@ -9,19 +9,19 @@ import (
 type OnCallDutyPolicy struct{}
 
 type OnCallDutyPolicyArgs struct {
-	ProjectID                                    *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
-	Name                                         string  `pulumi:"name" json:"name"`
-	Description                                  *string `pulumi:"description,optional" json:"description,omitempty"`
-	RepeatPolicyIfNoOneAcknowledges              *bool   `pulumi:"repeatPolicyIfNoOneAcknowledges,optional" json:"repeatPolicyIfNoOneAcknowledges,omitempty"`
-	RepeatPolicyIfNoOneAcknowledgesNoOfTimes     *int    `pulumi:"repeatPolicyIfNoOneAcknowledgesNoOfTimes,optional" json:"repeatPolicyIfNoOneAcknowledgesNoOfTimes,omitempty"`
+	ProjectID                                *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
+	Name                                     string  `pulumi:"name" json:"name"`
+	Description                              *string `pulumi:"description,optional" json:"description,omitempty"`
+	RepeatPolicyIfNoOneAcknowledges          *bool   `pulumi:"repeatPolicyIfNoOneAcknowledges,optional" json:"repeatPolicyIfNoOneAcknowledges,omitempty"`
+	RepeatPolicyIfNoOneAcknowledgesNoOfTimes *int    `pulumi:"repeatPolicyIfNoOneAcknowledgesNoOfTimes,optional" json:"repeatPolicyIfNoOneAcknowledgesNoOfTimes,omitempty"`
 }
 
 type OnCallDutyPolicyState struct {
 	OnCallDutyPolicyArgs
 	ResourceID string `pulumi:"resourceId" json:"_id"`
-	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
-	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
-	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
+	Slug       string `pulumi:"slug,optional" json:"slug,omitempty"`
+	CreatedAt  string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
+	UpdatedAt  string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
 }
 
 var _ infer.Annotated = (*OnCallDutyPolicy)(nil)

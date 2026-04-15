@@ -9,23 +9,23 @@ import (
 type StatusPage struct{}
 
 type StatusPageArgs struct {
-	ProjectID                            *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
-	Name                                 string  `pulumi:"name" json:"name"`
-	Description                          *string `pulumi:"description,optional" json:"description,omitempty"`
-	PageTitle                            *string `pulumi:"pageTitle,optional" json:"pageTitle,omitempty"`
-	PageDescription                      *string `pulumi:"pageDescription,optional" json:"pageDescription,omitempty"`
-	IsPublicStatusPage                   *bool   `pulumi:"isPublicStatusPage,optional" json:"isPublicStatusPage,omitempty"`
-	ShowIncidentHistoryInDays            *int    `pulumi:"showIncidentHistoryInDays,optional" json:"showIncidentHistoryInDays,omitempty"`
-	ShowAnnouncementHistoryInDays        *int    `pulumi:"showAnnouncementHistoryInDays,optional" json:"showAnnouncementHistoryInDays,omitempty"`
-	ShowScheduledEventHistoryInDays      *int    `pulumi:"showScheduledEventHistoryInDays,optional" json:"showScheduledEventHistoryInDays,omitempty"`
+	ProjectID                       *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
+	Name                            string  `pulumi:"name" json:"name"`
+	Description                     *string `pulumi:"description,optional" json:"description,omitempty"`
+	PageTitle                       *string `pulumi:"pageTitle,optional" json:"pageTitle,omitempty"`
+	PageDescription                 *string `pulumi:"pageDescription,optional" json:"pageDescription,omitempty"`
+	IsPublicStatusPage              *bool   `pulumi:"isPublicStatusPage,optional" json:"isPublicStatusPage,omitempty"`
+	ShowIncidentHistoryInDays       *int    `pulumi:"showIncidentHistoryInDays,optional" json:"showIncidentHistoryInDays,omitempty"`
+	ShowAnnouncementHistoryInDays   *int    `pulumi:"showAnnouncementHistoryInDays,optional" json:"showAnnouncementHistoryInDays,omitempty"`
+	ShowScheduledEventHistoryInDays *int    `pulumi:"showScheduledEventHistoryInDays,optional" json:"showScheduledEventHistoryInDays,omitempty"`
 }
 
 type StatusPageState struct {
 	StatusPageArgs
 	ResourceID string `pulumi:"resourceId" json:"_id"`
-	Slug      string `pulumi:"slug,optional" json:"slug,omitempty"`
-	CreatedAt string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
-	UpdatedAt string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
+	Slug       string `pulumi:"slug,optional" json:"slug,omitempty"`
+	CreatedAt  string `pulumi:"createdAt,optional" json:"createdAt,omitempty"`
+	UpdatedAt  string `pulumi:"updatedAt,optional" json:"updatedAt,omitempty"`
 }
 
 var _ infer.Annotated = (*StatusPage)(nil)

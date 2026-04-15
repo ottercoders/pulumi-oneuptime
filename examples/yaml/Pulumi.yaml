@@ -3,38 +3,114 @@ runtime: yaml
 description: Example OneUptime provider usage
 
 config:
-  projectId:
+  monitorStatusId:
     type: string
-    description: OneUptime Project ID
+    description: The ID of the initial monitor status (e.g. "Operational")
 
 resources:
+  # Teams
   engineering-team:
     type: oneuptime:resources:Team
     properties:
-      projectId: ${projectId}
       name: Engineering
       description: Engineering team managed by Pulumi
 
+  # Labels
+  production-label:
+    type: oneuptime:resources:Label
+    properties:
+      name: production
+      color: "#e74c3c"
+      description: Production environment
+
+  # Monitor Groups
+  api-monitor-group:
+    type: oneuptime:resources:MonitorGroup
+    properties:
+      name: API Monitors
+      description: All API health check monitors
+
+  # Monitors
   api-monitor:
     type: oneuptime:resources:Monitor
     properties:
-      projectId: ${projectId}
       name: API Health Check
       description: Monitors API availability
       monitorType: API
       currentMonitorStatusId: ${monitorStatusId}
 
+  # Status Pages
   public-status-page:
     type: oneuptime:resources:StatusPage
     properties:
-      projectId: ${projectId}
       name: Public Status
       pageTitle: Service Status
       pageDescription: Current status of our services
       isPublicStatusPage: true
       showIncidentHistoryInDays: 14
 
+  # Incident Severities
+  critical-severity:
+    type: oneuptime:resources:IncidentSeverity
+    properties:
+      name: Critical
+      color: "#e74c3c"
+      description: Service is completely down
+      order: 1
+
+  major-severity:
+    type: oneuptime:resources:IncidentSeverity
+    properties:
+      name: Major
+      color: "#e67e22"
+      description: Significant impact to users
+      order: 2
+
+  minor-severity:
+    type: oneuptime:resources:IncidentSeverity
+    properties:
+      name: Minor
+      color: "#f1c40f"
+      description: Minor impact, workaround available
+      order: 3
+
+  # Incident States
+  created-state:
+    type: oneuptime:resources:IncidentState
+    properties:
+      name: Created
+      color: "#e74c3c"
+      isCreatedState: true
+      order: 1
+
+  acknowledged-state:
+    type: oneuptime:resources:IncidentState
+    properties:
+      name: Acknowledged
+      color: "#e67e22"
+      isAcknowledgedState: true
+      order: 2
+
+  resolved-state:
+    type: oneuptime:resources:IncidentState
+    properties:
+      name: Resolved
+      color: "#2ecc71"
+      isResolvedState: true
+      order: 3
+
+  # On-Call Policies
+  primary-oncall:
+    type: oneuptime:resources:OnCallDutyPolicy
+    properties:
+      name: Primary On-Call
+      description: Primary on-call rotation for engineering
+      repeatPolicyIfNoOneAcknowledges: true
+      repeatPolicyIfNoOneAcknowledgesNoOfTimes: 3
+
 outputs:
   teamId: ${engineering-team.resourceId}
   monitorId: ${api-monitor.resourceId}
   statusPageId: ${public-status-page.resourceId}
+  labelId: ${production-label.resourceId}
+  monitorGroupId: ${api-monitor-group.resourceId}

@@ -34,7 +34,7 @@ var _ infer.Annotated = (*IncidentStateResource)(nil)
 
 func (i *IncidentStateResource) Annotate(a infer.Annotator) {
 	a.Describe(i, "Manages a OneUptime Incident State resource.")
-	a.SetToken("index", "IncidentState")
+	a.SetToken("resources", "IncidentState")
 }
 
 func (i *IncidentStateResource) Create(ctx context.Context, req infer.CreateRequest[IncidentStateResourceArgs]) (infer.CreateResponse[IncidentStateResourceState], error) {
