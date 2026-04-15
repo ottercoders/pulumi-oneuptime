@@ -80,8 +80,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Generate Node.js SDK
         run: pulumi package gen-sdk ./bin/${{ env.PROVIDER }} --language nodejs --out sdk/nodejs
@@ -110,7 +110,7 @@ jobs:
 
       - name: Publish Node.js SDK
         working-directory: sdk/nodejs/nodejs/bin
-        run: npm publish --access public --provenance
+        run: npm publish
 
       - name: Upload npm artifact
         uses: actions/upload-artifact@v4
