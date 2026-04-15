@@ -71,6 +71,9 @@ jobs:
       - name: Generate Node.js SDK
         run: pulumi package gen-sdk ./bin/${{ env.PROVIDER }} --language nodejs --out sdk/nodejs
 
+      - name: Add README to Node.js SDK
+        run: cp README.md sdk/nodejs/nodejs/README.md
+
       - name: Set npm package version and scope
         working-directory: sdk/nodejs/nodejs
         run: |
@@ -125,6 +128,9 @@ jobs:
 
       - name: Generate Python SDK
         run: pulumi package gen-sdk ./bin/${{ env.PROVIDER }} --language python --out sdk/python
+
+      - name: Add README to Python SDK
+        run: cp README.md sdk/python/python/README.md
 
       - name: Set Python package version
         working-directory: sdk/python/python
