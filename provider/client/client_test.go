@@ -27,8 +27,12 @@ func TestCreateResource(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Fatalf("failed to decode request body: %v", err)
 		}
-		if body["name"] != "Engineering" {
-			t.Errorf("expected name 'Engineering', got '%v'", body["name"])
+		data, ok := body["data"].(map[string]interface{})
+		if !ok {
+			t.Fatal("expected body wrapped in 'data' key")
+		}
+		if data["name"] != "Engineering" {
+			t.Errorf("expected name 'Engineering', got '%v'", data["name"])
 		}
 
 		w.Header().Set("Content-Type", "application/json")

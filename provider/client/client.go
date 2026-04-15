@@ -38,7 +38,12 @@ func IsNotFound(err error) bool {
 func (c *Client) CreateResource(ctx context.Context, path string, data map[string]interface{}) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/%s", c.BaseURL, path)
 
-	body, err := json.Marshal(data)
+	// OneUptime API expects create bodies wrapped in {"data": {...}}
+	wrapped := map[string]interface{}{
+		"data": data,
+	}
+
+	body, err := json.Marshal(wrapped)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling create body: %w", err)
 	}
@@ -75,7 +80,12 @@ func (c *Client) ReadResource(ctx context.Context, path string, id string, selec
 func (c *Client) UpdateResource(ctx context.Context, path string, id string, data map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/%s/%s", c.BaseURL, path, id)
 
-	body, err := json.Marshal(data)
+	// OneUptime API expects update bodies wrapped in {"data": {...}}
+	wrapped := map[string]interface{}{
+		"data": data,
+	}
+
+	body, err := json.Marshal(wrapped)
 	if err != nil {
 		return fmt.Errorf("marshalling update body: %w", err)
 	}
@@ -149,7 +159,8 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body []byte)
 	}
 
 	// Some endpoints return empty body (e.g., DELETE, PUT)
-	if len(respBody) == 0 {
+	// Also treat "{}" as empty (e.g., Read after delete returns 200 with {})
+	if len(respBody) == 0 || string(respBody) == "{}" {
 		return nil, nil
 	}
 

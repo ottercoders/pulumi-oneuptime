@@ -191,8 +191,13 @@ func TestTeamResource_LifeCycle(t *testing.T) {
 	if createReq == nil {
 		t.Fatal("expected POST /api/team request")
 	}
-	if createReq.Body["projectId"] != "test-project-id" {
-		t.Errorf("expected projectId 'test-project-id' in create body, got %v", createReq.Body["projectId"])
+	// Body is wrapped in {"data": {...}}
+	dataMap, ok := createReq.Body["data"].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected create body to be wrapped in 'data' key")
+	}
+	if dataMap["projectId"] != "test-project-id" {
+		t.Errorf("expected projectId 'test-project-id' in create body data, got %v", dataMap["projectId"])
 	}
 
 	// Read
