@@ -9,10 +9,12 @@ import (
 type OnCallDutyPolicyEscalationRule struct{}
 
 type OnCallDutyPolicyEscalationRuleArgs struct {
-	ProjectID            *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
-	OnCallDutyPolicyID   string  `pulumi:"onCallDutyPolicyId" json:"onCallDutyPolicyId"`
-	Order                int     `pulumi:"order" json:"order"`
-	EscalateAfterInMinutes *int  `pulumi:"escalateAfterInMinutes,optional" json:"escalateAfterInMinutes,omitempty"`
+	ProjectID              *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
+	OnCallDutyPolicyID     string  `pulumi:"onCallDutyPolicyId" json:"onCallDutyPolicyId"`
+	Name                   *string `pulumi:"name,optional" json:"name,omitempty"`
+	Description            *string `pulumi:"description,optional" json:"description,omitempty"`
+	Order                  int     `pulumi:"order" json:"order"`
+	EscalateAfterInMinutes *int    `pulumi:"escalateAfterInMinutes,optional" json:"escalateAfterInMinutes,omitempty"`
 }
 
 type OnCallDutyPolicyEscalationRuleState struct {

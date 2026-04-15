@@ -56,9 +56,15 @@ func (c *Config) Configure(ctx context.Context) error {
 		timeout = *c.Timeout
 	}
 
+	tenantID := ""
+	if c.ProjectID != nil {
+		tenantID = *c.ProjectID
+	}
+
 	c.client = &client.Client{
-		BaseURL: baseURL,
-		APIKey:  c.ApiKey,
+		BaseURL:  baseURL,
+		APIKey:   c.ApiKey,
+		TenantID: tenantID,
 		HTTPClient: &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 		},
