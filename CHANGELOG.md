@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.2.0...v0.2.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* **client:** add debug logging and improve error messages ([a448814](https://github.com/ottercoders/pulumi-oneuptime/commit/a448814141e521ae94ee6f251d7e3d105bc66d0e))
+
 ## [0.2.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.1.6...v0.2.0) (2026-04-15)
 
 
