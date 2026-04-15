@@ -34,8 +34,10 @@ func ToMap(v interface{}) (map[string]interface{}, error) {
 }
 
 // FromMap populates a struct from a map using json tags.
+// Unwraps OneUptime typed objects like {"_type": "DateTime", "value": "..."} to plain values.
 func FromMap(m map[string]interface{}, target interface{}) error {
-	data, err := json.Marshal(m)
+	unwrapped := unwrapTypedValues(m)
+	data, err := json.Marshal(unwrapped)
 	if err != nil {
 		return fmt.Errorf("marshalling map: %w", err)
 	}
@@ -43,6 +45,31 @@ func FromMap(m map[string]interface{}, target interface{}) error {
 		return fmt.Errorf("unmarshalling to struct: %w", err)
 	}
 	return nil
+}
+
+// unwrapTypedValues recursively unwraps OneUptime typed wrapper objects.
+// The API returns objects like {"_type": "DateTime", "value": "2026-01-01T00:00:00Z"}
+// and {"_type": "ObjectID", "value": "uuid-here"} which need to be flattened
+// to their plain "value" for struct deserialization.
+func unwrapTypedValues(m map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		switch val := v.(type) {
+		case map[string]interface{}:
+			if _, hasType := val["_type"]; hasType {
+				if value, hasValue := val["value"]; hasValue {
+					result[k] = value
+				} else {
+					result[k] = nil
+				}
+			} else {
+				result[k] = unwrapTypedValues(val)
+			}
+		default:
+			result[k] = v
+		}
+	}
+	return result
 }
 
 // SelectFields returns a map of {jsonFieldName: true} for all json-tagged
