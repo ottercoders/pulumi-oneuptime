@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.1.1...v0.1.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ci:** add --provenance flag for npm trusted publishing ([128fad3](https://github.com/ottercoders/pulumi-oneuptime/commit/128fad328522ab5f94e00c702a54c623cfac367f))
+
 ## [Unreleased]
 
 ### Added
