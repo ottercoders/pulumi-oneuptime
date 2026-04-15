@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: make provider
+
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+
+      - name: Test
+        run: gotestsum --junitfile test-results.xml --format testdox -- ./provider/... -count=1
+
+      - name: Test Report
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: Go Tests
+          path: test-results.xml
+          reporter: java-junit
+          fail-on-error: true
