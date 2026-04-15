@@ -12,8 +12,8 @@ type ProjectSSOArgs struct {
 	ProjectID    *string `pulumi:"projectId,optional" json:"projectId,omitempty"`
 	Name         string  `pulumi:"name" json:"name"`
 	Description  *string `pulumi:"description,optional" json:"description,omitempty"`
-	SignOnURL    string  `pulumi:"signOnUrl" json:"signOnURL"`
-	IssuerURL    *string `pulumi:"issuerUrl,optional" json:"issuerURL,omitempty"`
+	SignOnURL    string  `pulumi:"signOnUrl" json:"signOnUrl"`
+	IssuerURL    *string `pulumi:"issuerUrl,optional" json:"issuerUrl,omitempty"`
 	ClientID     *string `pulumi:"clientId,optional" json:"clientId,omitempty"`
 	ClientSecret *string `pulumi:"clientSecret,optional" json:"clientSecret,omitempty"`
 	IsSaml       *bool   `pulumi:"isSaml,optional" json:"isSaml,omitempty"`
