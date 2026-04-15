@@ -22,6 +22,13 @@ func Provider() p.Provider {
 			infer.Resource[*resources.StatusPage, resources.StatusPageArgs, resources.StatusPageState](&resources.StatusPage{}),
 			infer.Resource[*resources.Incident, resources.IncidentArgs, resources.IncidentState](&resources.Incident{}),
 			infer.Resource[*resources.OnCallDutyPolicy, resources.OnCallDutyPolicyArgs, resources.OnCallDutyPolicyState](&resources.OnCallDutyPolicy{}),
+			infer.Resource[*resources.Label, resources.LabelArgs, resources.LabelState](&resources.Label{}),
+			infer.Resource[*resources.MonitorGroup, resources.MonitorGroupArgs, resources.MonitorGroupState](&resources.MonitorGroup{}),
+			infer.Resource[*resources.IncidentStateResource, resources.IncidentStateResourceArgs, resources.IncidentStateResourceState](&resources.IncidentStateResource{}),
+			infer.Resource[*resources.IncidentSeverity, resources.IncidentSeverityArgs, resources.IncidentSeverityState](&resources.IncidentSeverity{}),
+			infer.Resource[*resources.AlertState, resources.AlertStateArgs, resources.AlertStateState](&resources.AlertState{}),
+			infer.Resource[*resources.AlertSeverity, resources.AlertSeverityArgs, resources.AlertSeverityState](&resources.AlertSeverity{}),
+			infer.Resource[*resources.Project, resources.ProjectArgs, resources.ProjectState](&resources.Project{}),
 		).
 		Build()
 	if err != nil {
