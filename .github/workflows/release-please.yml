@@ -9,6 +9,9 @@ permissions:
   pull-requests: write
   id-token: write
 
+env:
+  PROVIDER: pulumi-resource-oneuptime
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -23,12 +26,206 @@ jobs:
           release-type: go
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  release:
+  # ── Build provider binaries ──
+  goreleaser:
+    name: GoReleaser
+    runs-on: ubuntu-latest
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
-    uses: ./.github/workflows/release.yml
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Upload provider binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: provider-binaries
+          path: dist/*.tar.gz
+
+  # ── Publish Node.js SDK to npm ──
+  publish-npm:
+    name: Publish npm
+    runs-on: ubuntu-latest
+    needs: [release-please, goreleaser]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
     permissions:
-      contents: write
+      contents: read
       id-token: write
-    with:
-      version: ${{ needs.release-please.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+        with:
+          pulumi-version: latest
+
+      - name: Set version
+        run: echo "VERSION=${{ needs.release-please.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build provider
+        run: make provider VERSION=${{ env.VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Generate Node.js SDK
+        run: pulumi package gen-sdk ./bin/${{ env.PROVIDER }} --language nodejs --out sdk/nodejs
+
+      - name: Add README to Node.js SDK
+        run: cp README.md sdk/nodejs/nodejs/README.md
+
+      - name: Build Node.js SDK
+        working-directory: sdk/nodejs/nodejs
+        run: |
+          npm install
+          npm run build
+
+      - name: Prepare npm package
+        working-directory: sdk/nodejs/nodejs
+        run: |
+          cp package.json bin/
+          cp README.md bin/ 2>/dev/null || true
+          cp pulumi-plugin.json bin/ 2>/dev/null || true
+          cd bin
+          jq '.name = "@ottercoders/pulumi-oneuptime" | .version = "${{ env.VERSION }}" | . + {"main": "index.js", "types": "index.d.ts", "repository": {"type": "git", "url": "https://github.com/ottercoders/pulumi-oneuptime"}}' package.json > tmp.json && mv tmp.json package.json
+
+      - name: Pack Node.js SDK
+        working-directory: sdk/nodejs/nodejs/bin
+        run: npm pack
+
+      - name: Publish Node.js SDK
+        working-directory: sdk/nodejs/nodejs/bin
+        run: npm publish
+
+      - name: Upload npm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: sdk/nodejs/nodejs/bin/*.tgz
+
+  # ── Publish Python SDK to PyPI ──
+  publish-pypi:
+    name: Publish PyPI
+    runs-on: ubuntu-latest
+    needs: [release-please, goreleaser]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+        with:
+          pulumi-version: latest
+
+      - name: Set version
+        run: echo "VERSION=${{ needs.release-please.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build provider
+        run: make provider VERSION=${{ env.VERSION }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate Python SDK
+        run: pulumi package gen-sdk ./bin/${{ env.PROVIDER }} --language python --out sdk/python
+
+      - name: Add README to Python SDK
+        run: cp README.md sdk/python/python/README.md
+
+      - name: Set Python package version
+        working-directory: sdk/python/python
+        run: sed -i 's/^  version = .*/  version = "${{ env.VERSION }}"/' pyproject.toml
+
+      - name: Build Python SDK
+        working-directory: sdk/python/python
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish Python SDK
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/python/python/dist/
+
+      - name: Upload PyPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi-package
+          path: sdk/python/python/dist/*
+
+  # ── Attach SDK artifacts to GitHub Release ──
+  attach-artifacts:
+    name: Attach Artifacts to Release
+    runs-on: ubuntu-latest
+    needs: [release-please, publish-npm, publish-pypi]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+        with:
+          pulumi-version: latest
+
+      - name: Set version
+        run: echo "VERSION=${{ needs.release-please.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build provider and generate schema
+        run: |
+          make provider VERSION=${{ env.VERSION }}
+          make schema
+
+      - name: Download npm artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: artifacts/npm
+
+      - name: Download PyPI artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-package
+          path: artifacts/pypi
+
+      - name: Attach artifacts to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "v${{ env.VERSION }}" \
+            artifacts/npm/*.tgz \
+            artifacts/pypi/*.tar.gz \
+            artifacts/pypi/*.whl \
+            schema.json \
+            --clobber
