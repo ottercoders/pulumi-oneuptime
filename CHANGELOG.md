@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.4.0...v0.5.0) (2026-04-17)
+
+
+### Features
+
+* add 10 data source functions for looking up resources by name ([f01565d](https://github.com/ottercoders/pulumi-oneuptime/commit/f01565d5fa486184baabae16ee2f818916153124))
+* add 11 resources for TF provider parity ([c81b53e](https://github.com/ottercoders/pulumi-oneuptime/commit/c81b53ec36eed19f598cfc965bd616c5d8961d79))
+* add 22 resources for auth, ownership, status pages, and maintenance ([272a35f](https://github.com/ottercoders/pulumi-oneuptime/commit/272a35f384592620ed659e8a2a033748c75d1773))
+
 ## [0.4.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.3.4...v0.4.0) (2026-04-15)
 
 
