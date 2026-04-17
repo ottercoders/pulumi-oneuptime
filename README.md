@@ -67,6 +67,45 @@ All resources (except `Project`) accept an optional `projectId` property. When o
 | `AlertState`         | Manages alert workflow states            |
 | `AlertSeverity`      | Manages alert severity levels            |
 | `Project`            | Manages OneUptime projects               |
+| `StatusPageGroup`    | Groups monitors on a status page          |
+| `StatusPageResource` | Links a monitor or monitor group to a status page |
+| `OnCallDutyPolicyEscalationRule` | Escalation timing/order within an on-call policy |
+| `OnCallDutyPolicySchedule` | Rotation schedule within an on-call policy |
+| `OnCallDutyPolicyEscalationRuleSchedule` | Links a schedule to an escalation rule |
+| `ProjectSSO`         | OIDC/SAML SSO configuration              |
+| `Domain`             | Verified email domain for SSO user matching |
+| `ProjectSsoTeam`     | Auto-assigns SSO users to a team on first login |
+| `ApiKey`             | API key lifecycle (the `apiKey` output is a secret) |
+| `ApiKeyPermission`   | Fine-grained permissions on an API key   |
+| `TeamMember`         | Adds an existing user to a team          |
+| `TeamPermission`     | Assigns permissions to a team            |
+| `MonitorTeamOwner`   | Team owns a monitor                      |
+| `MonitorUserOwner`   | User owns a monitor                      |
+| `MonitorGroupResource` | Adds a monitor to a monitor group     |
+| `Probe`              | Monitoring probe registration (the `key` output is a secret) |
+| `StatusPageAnnouncement` | Announcement banner on status pages  |
+| `StatusPageDomain`   | Binds a custom domain to a status page   |
+| `StatusPageHeaderLink` | Link in the status page header         |
+| `StatusPageFooterLink` | Link in the status page footer         |
+| `StatusPageSubscriber` | Email/SMS/webhook subscriber           |
+| `StatusPageTeamOwner` | Team owns a status page                 |
+| `StatusPageUserOwner` | User owns a status page                 |
+| `IncidentTemplate`   | Standardized template for incident creation |
+| `IncidentNoteTemplate` | Reusable incident note template        |
+| `ScheduledMaintenanceEvent` | Planned maintenance window         |
+| `ScheduledMaintenanceState` | Workflow state for maintenance events |
+| `ScheduledMaintenanceTemplate` | Template for maintenance events |
+| `Workflow`           | Automation workflow                      |
+
+### Bootstrap flow
+
+The provider cannot create the very first OneUptime user or the master API key; both must be set up via the OneUptime UI:
+
+1. Install OneUptime and register an admin user via the UI
+2. Create a project in the UI
+3. Mint the master API key in **Project Settings → API Keys**
+4. Set `oneuptime:apiKey` in your Pulumi config (or export `ONEUPTIME_API_KEY`)
+5. Everything else — additional API keys, team membership, permissions, monitors, etc. — is declarative from here on
 
 ### Resource Properties
 

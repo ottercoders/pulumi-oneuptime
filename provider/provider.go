@@ -38,6 +38,30 @@ func Provider() p.Provider {
 			infer.Resource[*resources.ProjectSSO, resources.ProjectSSOArgs, resources.ProjectSSOState](&resources.ProjectSSO{}),
 			infer.Resource[*resources.Domain, resources.DomainArgs, resources.DomainState](&resources.Domain{}),
 			infer.Resource[*resources.ProjectSsoTeam, resources.ProjectSsoTeamArgs, resources.ProjectSsoTeamState](&resources.ProjectSsoTeam{}),
+			// Phase 1: Auth + ownership
+			infer.Resource[*resources.ApiKey, resources.ApiKeyArgs, resources.ApiKeyState](&resources.ApiKey{}),
+			infer.Resource[*resources.ApiKeyPermission, resources.ApiKeyPermissionArgs, resources.ApiKeyPermissionState](&resources.ApiKeyPermission{}),
+			infer.Resource[*resources.TeamMember, resources.TeamMemberArgs, resources.TeamMemberState](&resources.TeamMember{}),
+			infer.Resource[*resources.TeamPermission, resources.TeamPermissionArgs, resources.TeamPermissionState](&resources.TeamPermission{}),
+			infer.Resource[*resources.MonitorTeamOwner, resources.MonitorTeamOwnerArgs, resources.MonitorTeamOwnerState](&resources.MonitorTeamOwner{}),
+			infer.Resource[*resources.MonitorUserOwner, resources.MonitorUserOwnerArgs, resources.MonitorUserOwnerState](&resources.MonitorUserOwner{}),
+			infer.Resource[*resources.MonitorGroupResource, resources.MonitorGroupResourceArgs, resources.MonitorGroupResourceState](&resources.MonitorGroupResource{}),
+			infer.Resource[*resources.Probe, resources.ProbeArgs, resources.ProbeState](&resources.Probe{}),
+			// Phase 2: Status page completeness
+			infer.Resource[*resources.StatusPageAnnouncement, resources.StatusPageAnnouncementArgs, resources.StatusPageAnnouncementState](&resources.StatusPageAnnouncement{}),
+			infer.Resource[*resources.StatusPageDomain, resources.StatusPageDomainArgs, resources.StatusPageDomainState](&resources.StatusPageDomain{}),
+			infer.Resource[*resources.StatusPageHeaderLink, resources.StatusPageHeaderLinkArgs, resources.StatusPageHeaderLinkState](&resources.StatusPageHeaderLink{}),
+			infer.Resource[*resources.StatusPageFooterLink, resources.StatusPageFooterLinkArgs, resources.StatusPageFooterLinkState](&resources.StatusPageFooterLink{}),
+			infer.Resource[*resources.StatusPageSubscriber, resources.StatusPageSubscriberArgs, resources.StatusPageSubscriberState](&resources.StatusPageSubscriber{}),
+			infer.Resource[*resources.StatusPageTeamOwner, resources.StatusPageTeamOwnerArgs, resources.StatusPageTeamOwnerState](&resources.StatusPageTeamOwner{}),
+			infer.Resource[*resources.StatusPageUserOwner, resources.StatusPageUserOwnerArgs, resources.StatusPageUserOwnerState](&resources.StatusPageUserOwner{}),
+			// Phase 3: Incident + maintenance lifecycle
+			infer.Resource[*resources.IncidentTemplate, resources.IncidentTemplateArgs, resources.IncidentTemplateState](&resources.IncidentTemplate{}),
+			infer.Resource[*resources.IncidentNoteTemplate, resources.IncidentNoteTemplateArgs, resources.IncidentNoteTemplateState](&resources.IncidentNoteTemplate{}),
+			infer.Resource[*resources.ScheduledMaintenanceEvent, resources.ScheduledMaintenanceEventArgs, resources.ScheduledMaintenanceEventState](&resources.ScheduledMaintenanceEvent{}),
+			infer.Resource[*resources.ScheduledMaintenanceState, resources.ScheduledMaintenanceStateArgs, resources.ScheduledMaintenanceStateState](&resources.ScheduledMaintenanceState{}),
+			infer.Resource[*resources.ScheduledMaintenanceTemplate, resources.ScheduledMaintenanceTemplateArgs, resources.ScheduledMaintenanceTemplateState](&resources.ScheduledMaintenanceTemplate{}),
+			infer.Resource[*resources.Workflow, resources.WorkflowArgs, resources.WorkflowState](&resources.Workflow{}),
 		).
 		Build()
 	if err != nil {
