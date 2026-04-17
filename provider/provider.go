@@ -62,6 +62,18 @@ func Provider() p.Provider {
 			infer.Resource[*resources.ScheduledMaintenanceState, resources.ScheduledMaintenanceStateArgs, resources.ScheduledMaintenanceStateState](&resources.ScheduledMaintenanceState{}),
 			infer.Resource[*resources.ScheduledMaintenanceTemplate, resources.ScheduledMaintenanceTemplateArgs, resources.ScheduledMaintenanceTemplateState](&resources.ScheduledMaintenanceTemplate{}),
 			infer.Resource[*resources.Workflow, resources.WorkflowArgs, resources.WorkflowState](&resources.Workflow{}),
+			// TF parity: on-call rotation, ownership, monitor status, workflow variables, telemetry
+			infer.Resource[*resources.OnCallScheduleLayer, resources.OnCallScheduleLayerArgs, resources.OnCallScheduleLayerState](&resources.OnCallScheduleLayer{}),
+			infer.Resource[*resources.OnCallScheduleLayerUser, resources.OnCallScheduleLayerUserArgs, resources.OnCallScheduleLayerUserState](&resources.OnCallScheduleLayerUser{}),
+			infer.Resource[*resources.OnCallDutyPolicyTeamOwner, resources.OnCallDutyPolicyTeamOwnerArgs, resources.OnCallDutyPolicyTeamOwnerState](&resources.OnCallDutyPolicyTeamOwner{}),
+			infer.Resource[*resources.OnCallDutyPolicyUserOwner, resources.OnCallDutyPolicyUserOwnerArgs, resources.OnCallDutyPolicyUserOwnerState](&resources.OnCallDutyPolicyUserOwner{}),
+			infer.Resource[*resources.MonitorStatus, resources.MonitorStatusArgs, resources.MonitorStatusState](&resources.MonitorStatus{}),
+			infer.Resource[*resources.MonitorProbe, resources.MonitorProbeArgs, resources.MonitorProbeState](&resources.MonitorProbe{}),
+			infer.Resource[*resources.IncidentTeamOwner, resources.IncidentTeamOwnerArgs, resources.IncidentTeamOwnerState](&resources.IncidentTeamOwner{}),
+			infer.Resource[*resources.IncidentUserOwner, resources.IncidentUserOwnerArgs, resources.IncidentUserOwnerState](&resources.IncidentUserOwner{}),
+			infer.Resource[*resources.WorkflowVariable, resources.WorkflowVariableArgs, resources.WorkflowVariableState](&resources.WorkflowVariable{}),
+			infer.Resource[*resources.TelemetryIngestionKey, resources.TelemetryIngestionKeyArgs, resources.TelemetryIngestionKeyState](&resources.TelemetryIngestionKey{}),
+			infer.Resource[*resources.ScheduledMaintenanceTeamOwner, resources.ScheduledMaintenanceTeamOwnerArgs, resources.ScheduledMaintenanceTeamOwnerState](&resources.ScheduledMaintenanceTeamOwner{}),
 		).
 		WithFunctions(
 			infer.Function[*resources.GetMonitorStatus, resources.GetMonitorStatusArgs, resources.GetMonitorStatusResult](&resources.GetMonitorStatus{}),
