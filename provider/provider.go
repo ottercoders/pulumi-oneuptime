@@ -63,6 +63,18 @@ func Provider() p.Provider {
 			infer.Resource[*resources.ScheduledMaintenanceTemplate, resources.ScheduledMaintenanceTemplateArgs, resources.ScheduledMaintenanceTemplateState](&resources.ScheduledMaintenanceTemplate{}),
 			infer.Resource[*resources.Workflow, resources.WorkflowArgs, resources.WorkflowState](&resources.Workflow{}),
 		).
+		WithFunctions(
+			infer.Function[*resources.GetMonitorStatus, resources.GetMonitorStatusArgs, resources.GetMonitorStatusResult](&resources.GetMonitorStatus{}),
+			infer.Function[*resources.GetMonitor, resources.LookupByNameArgs, resources.LookupResult](&resources.GetMonitor{}),
+			infer.Function[*resources.GetTeam, resources.LookupByNameArgs, resources.LookupResult](&resources.GetTeam{}),
+			infer.Function[*resources.GetLabel, resources.LookupByNameArgs, resources.LookupResult](&resources.GetLabel{}),
+			infer.Function[*resources.GetStatusPage, resources.LookupByNameArgs, resources.LookupResult](&resources.GetStatusPage{}),
+			infer.Function[*resources.GetIncidentState, resources.LookupByNameArgs, resources.LookupResult](&resources.GetIncidentState{}),
+			infer.Function[*resources.GetIncidentSeverity, resources.LookupByNameArgs, resources.LookupResult](&resources.GetIncidentSeverity{}),
+			infer.Function[*resources.GetAlertState, resources.LookupByNameArgs, resources.LookupResult](&resources.GetAlertState{}),
+			infer.Function[*resources.GetAlertSeverity, resources.LookupByNameArgs, resources.LookupResult](&resources.GetAlertSeverity{}),
+			infer.Function[*resources.GetOnCallDutyPolicy, resources.LookupByNameArgs, resources.LookupResult](&resources.GetOnCallDutyPolicy{}),
+		).
 		Build()
 	if err != nil {
 		panic(err)

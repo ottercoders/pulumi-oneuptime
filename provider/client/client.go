@@ -95,6 +95,50 @@ func (c *Client) UpdateResource(ctx context.Context, path string, id string, dat
 	return err
 }
 
+func (c *Client) ListResources(ctx context.Context, path string, query map[string]interface{}, selectFields map[string]bool, limit int) ([]map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/api/%s/get-list", c.BaseURL, path)
+
+	reqBody := map[string]interface{}{
+		"limit": limit,
+		"skip":  0,
+	}
+	if query != nil {
+		reqBody["query"] = query
+	}
+	if selectFields != nil {
+		reqBody["select"] = selectFields
+	}
+
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling list body: %w", err)
+	}
+
+	resp, err := c.doRequest(ctx, http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	dataRaw, ok := resp["data"]
+	if !ok {
+		return nil, nil
+	}
+
+	dataArr, ok := dataRaw.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected data array in list response, got %T", dataRaw)
+	}
+
+	results := make([]map[string]interface{}, 0, len(dataArr))
+	for _, item := range dataArr {
+		if m, ok := item.(map[string]interface{}); ok {
+			results = append(results, m)
+		}
+	}
+
+	return results, nil
+}
+
 func (c *Client) DeleteResource(ctx context.Context, path string, id string) error {
 	url := fmt.Sprintf("%s/api/%s/%s", c.BaseURL, path, id)
 
