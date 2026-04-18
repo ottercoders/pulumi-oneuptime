@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -440,6 +441,175 @@ func TestListResources_RetriesOnUnknownColumn(t *testing.T) {
 	}
 	if attempts != 2 {
 		t.Errorf("expected 2 attempts, got %d", attempts)
+	}
+}
+
+func TestCreateResource_RetriesOnUnknownColumn(t *testing.T) {
+	var attempts int
+	var sawDescription []bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		var env map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&env)
+		data, _ := env["data"].(map[string]interface{})
+		_, hasDesc := data["description"]
+		sawDescription = append(sawDescription, hasDesc)
+
+		if hasDesc {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "TableColumnMetadata not found for description column",
+			})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"_id":  "proj-1",
+			"name": data["name"],
+		})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	result, err := c.CreateResource(context.Background(), "project", map[string]interface{}{
+		"name":        "foo",
+		"description": "bar",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["_id"] != "proj-1" {
+		t.Errorf("unexpected result: %v", result)
+	}
+	if attempts != 2 {
+		t.Errorf("expected 2 attempts (initial + retry), got %d", attempts)
+	}
+	if len(sawDescription) != 2 || !sawDescription[0] || sawDescription[1] {
+		t.Errorf("expected description in call 1 only; saw=%v", sawDescription)
+	}
+}
+
+func TestUpdateResource_RetriesOnUnknownColumn(t *testing.T) {
+	var attempts int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		var env map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&env)
+		data, _ := env["data"].(map[string]interface{})
+		if _, hasDesc := data["description"]; hasDesc {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "TableColumnMetadata not found for description column",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	err := c.UpdateResource(context.Background(), "project", "proj-1", map[string]interface{}{
+		"name":        "foo",
+		"description": "bar",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if attempts != 2 {
+		t.Errorf("expected 2 attempts, got %d", attempts)
+	}
+}
+
+func TestCreateResource_SharesUnknownColumnCacheWithRead(t *testing.T) {
+	// Reproduces the v0.5.2 scenario: Read teaches the client that
+	// `description` is unknown, then a subsequent Create should skip it
+	// upfront without paying another rejection round trip.
+	var writesSawDesc []bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var env map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&env)
+
+		// Read endpoint: reject select{description:true}, else return item.
+		if strings.Contains(r.URL.Path, "/get-item") {
+			sel, _ := env["select"].(map[string]interface{})
+			if _, hasDesc := sel["description"]; hasDesc {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{
+					"message": "TableColumnMetadata not found for description column",
+				})
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{"_id": "proj-1"})
+			return
+		}
+
+		// Create endpoint: record whether description was present.
+		data, _ := env["data"].(map[string]interface{})
+		_, hasDesc := data["description"]
+		writesSawDesc = append(writesSawDesc, hasDesc)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "proj-1"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+
+	// First: do a Read that primes the cache.
+	if _, err := c.ReadResource(context.Background(), "project", "proj-1", map[string]bool{"_id": true, "description": true}); err != nil {
+		t.Fatalf("read: %v", err)
+	}
+
+	// Then: a Create that passes description. Should skip it upfront.
+	if _, err := c.CreateResource(context.Background(), "project", map[string]interface{}{"name": "foo", "description": "bar"}); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	if len(writesSawDesc) != 1 {
+		t.Fatalf("expected 1 write attempt (cache should have skipped the retry), got %d", len(writesSawDesc))
+	}
+	if writesSawDesc[0] {
+		t.Error("Create should have omitted description upfront because Read marked it unknown")
+	}
+}
+
+func TestCreateResource_PreservesProjectIDForTenantHeader(t *testing.T) {
+	// Defensive: dropping unknown columns must never strip projectId, since
+	// that also drives the tenantid header override on write endpoints.
+	var gotTenant string
+	var gotBody map[string]interface{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTenant = r.Header.Get("tenantid")
+		json.NewDecoder(r.Body).Decode(&gotBody)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "abc"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	// Seed the cache with a different bad column, so stripping kicks in.
+	c.markUnknownColumn("monitor", "description")
+
+	_, err := c.CreateResource(context.Background(), "monitor", map[string]interface{}{
+		"name":        "m",
+		"description": "dropped",
+		"projectId":   "proj-arg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotTenant != "proj-arg" {
+		t.Errorf("expected tenantid from arg 'proj-arg', got %q", gotTenant)
+	}
+	data, _ := gotBody["data"].(map[string]interface{})
+	if _, ok := data["description"]; ok {
+		t.Error("expected description to be dropped via cache")
+	}
+	if data["projectId"] != "proj-arg" {
+		t.Errorf("projectId should survive stripping, got %v", data["projectId"])
 	}
 }
 

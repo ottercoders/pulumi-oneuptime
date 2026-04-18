@@ -86,6 +86,25 @@ func (c *Client) stripUnknownColumns(path string, sel map[string]bool) map[strin
 	return out
 }
 
+// stripUnknownColumnsFromData returns a copy of data with any columns that
+// have previously been rejected for this path removed. Used on Create/Update
+// bodies so writes don't carry fields the target OneUptime build refuses.
+func (c *Client) stripUnknownColumnsFromData(path string, data map[string]interface{}) map[string]interface{} {
+	if data == nil {
+		return nil
+	}
+	c.colMu.RLock()
+	blocked := c.unknownCols[path]
+	c.colMu.RUnlock()
+	out := make(map[string]interface{}, len(data))
+	for k, v := range data {
+		if !blocked[k] {
+			out[k] = v
+		}
+	}
+	return out
+}
+
 // selectWithTolerance invokes doCall with a select map, and on a 400 response
 // naming an unknown column, drops that column and retries. Lets reads succeed
 // against self-hosted OneUptime builds whose schema is behind the upstream set
@@ -112,6 +131,39 @@ func (c *Client) selectWithTolerance(path string, sel map[string]bool, doCall fu
 	return nil, fmt.Errorf("%s: too many unknown-column retries", path)
 }
 
+// dataWithTolerance is the Create/Update counterpart to selectWithTolerance:
+// on a 400 "TableColumnMetadata not found" from the server, drop that column
+// from the body and retry. Silently discards user-supplied values the server
+// doesn't recognize — surfaces a debug log when ONEUPTIME_DEBUG is set so
+// callers can see what was dropped.
+func (c *Client) dataWithTolerance(path string, data map[string]interface{}, doCall func(map[string]interface{}) (map[string]interface{}, error)) (map[string]interface{}, error) {
+	current := c.stripUnknownColumnsFromData(path, data)
+	const maxAttempts = 8
+	for i := 0; i < maxAttempts; i++ {
+		resp, err := doCall(current)
+		if err == nil {
+			return resp, nil
+		}
+		var apiErr *APIError
+		if !errors.As(err, &apiErr) || apiErr.StatusCode != 400 {
+			return nil, err
+		}
+		col := extractUnknownColumn(apiErr.Message)
+		if col == "" || current == nil {
+			return nil, err
+		}
+		if _, present := current[col]; !present {
+			return nil, err
+		}
+		if os.Getenv("ONEUPTIME_DEBUG") != "" {
+			fmt.Fprintf(os.Stderr, "[oneuptime] %s: dropping unknown column %q from write body and retrying\n", path, col)
+		}
+		c.markUnknownColumn(path, col)
+		delete(current, col)
+	}
+	return nil, fmt.Errorf("%s: too many unknown-column retries", path)
+}
+
 // tenantFromData returns a tenantid override to use for a request whose body
 // carries a projectId. OneUptime's create/update endpoints enforce scoping via
 // the tenantid header; when the provider config omits projectId but the
@@ -126,17 +178,14 @@ func tenantFromData(data map[string]interface{}) string {
 func (c *Client) CreateResource(ctx context.Context, path string, data map[string]interface{}) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s/api/%s", c.BaseURL, path)
 
-	// OneUptime API expects create bodies wrapped in {"data": {...}}
-	wrapped := map[string]interface{}{
-		"data": data,
-	}
-
-	body, err := json.Marshal(wrapped)
-	if err != nil {
-		return nil, fmt.Errorf("marshalling create body: %w", err)
-	}
-
-	return c.doRequest(ctx, http.MethodPost, url, body, tenantFromData(data))
+	return c.dataWithTolerance(path, data, func(d map[string]interface{}) (map[string]interface{}, error) {
+		// OneUptime API expects create bodies wrapped in {"data": {...}}
+		body, err := json.Marshal(map[string]interface{}{"data": d})
+		if err != nil {
+			return nil, fmt.Errorf("marshalling create body: %w", err)
+		}
+		return c.doRequest(ctx, http.MethodPost, url, body, tenantFromData(d))
+	})
 }
 
 func (c *Client) ReadResource(ctx context.Context, path string, id string, selectFields map[string]bool) (map[string]interface{}, error) {
@@ -158,17 +207,14 @@ func (c *Client) ReadResource(ctx context.Context, path string, id string, selec
 func (c *Client) UpdateResource(ctx context.Context, path string, id string, data map[string]interface{}) error {
 	url := fmt.Sprintf("%s/api/%s/%s", c.BaseURL, path, id)
 
-	// OneUptime API expects update bodies wrapped in {"data": {...}}
-	wrapped := map[string]interface{}{
-		"data": data,
-	}
-
-	body, err := json.Marshal(wrapped)
-	if err != nil {
-		return fmt.Errorf("marshalling update body: %w", err)
-	}
-
-	_, err = c.doRequest(ctx, http.MethodPut, url, body, tenantFromData(data))
+	_, err := c.dataWithTolerance(path, data, func(d map[string]interface{}) (map[string]interface{}, error) {
+		// OneUptime API expects update bodies wrapped in {"data": {...}}
+		body, err := json.Marshal(map[string]interface{}{"data": d})
+		if err != nil {
+			return nil, fmt.Errorf("marshalling update body: %w", err)
+		}
+		return c.doRequest(ctx, http.MethodPut, url, body, tenantFromData(d))
+	})
 	return err
 }
 
