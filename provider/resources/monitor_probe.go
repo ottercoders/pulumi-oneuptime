@@ -32,6 +32,13 @@ func (r *MonitorProbe) Create(ctx context.Context, req infer.CreateRequest[Monit
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[MonitorProbeState]{
+			ID:     "preview-id",
+			Output: MonitorProbeState{MonitorProbeArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[MonitorProbeState]{}, err
@@ -42,13 +49,6 @@ func (r *MonitorProbe) Create(ctx context.Context, req infer.CreateRequest[Monit
 		return infer.CreateResponse[MonitorProbeState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[MonitorProbeState]{
-			ID:     "preview-id",
-			Output: MonitorProbeState{MonitorProbeArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "monitor-probe", data)
 	if err != nil {

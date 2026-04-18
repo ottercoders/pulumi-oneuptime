@@ -32,6 +32,13 @@ func (t *Team) Create(ctx context.Context, req infer.CreateRequest[TeamArgs]) (i
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[TeamState]{
+			ID:     "preview-id",
+			Output: TeamState{TeamArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[TeamState]{}, err
@@ -42,13 +49,6 @@ func (t *Team) Create(ctx context.Context, req infer.CreateRequest[TeamArgs]) (i
 		return infer.CreateResponse[TeamState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[TeamState]{
-			ID:     "preview-id",
-			Output: TeamState{TeamArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "team", data)
 	if err != nil {

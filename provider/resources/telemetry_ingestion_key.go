@@ -38,6 +38,13 @@ func (r *TelemetryIngestionKey) Create(ctx context.Context, req infer.CreateRequ
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[TelemetryIngestionKeyState]{
+			ID:     "preview-id",
+			Output: TelemetryIngestionKeyState{TelemetryIngestionKeyArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[TelemetryIngestionKeyState]{}, err
@@ -48,13 +55,6 @@ func (r *TelemetryIngestionKey) Create(ctx context.Context, req infer.CreateRequ
 		return infer.CreateResponse[TelemetryIngestionKeyState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[TelemetryIngestionKeyState]{
-			ID:     "preview-id",
-			Output: TelemetryIngestionKeyState{TelemetryIngestionKeyArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "telemetry-ingestion-key", data)
 	if err != nil {

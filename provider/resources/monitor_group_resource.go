@@ -31,6 +31,13 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req infer.CreateReque
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[MonitorGroupResourceState]{
+			ID:     "preview-id",
+			Output: MonitorGroupResourceState{MonitorGroupResourceArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[MonitorGroupResourceState]{}, err
@@ -41,13 +48,6 @@ func (r *MonitorGroupResource) Create(ctx context.Context, req infer.CreateReque
 		return infer.CreateResponse[MonitorGroupResourceState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[MonitorGroupResourceState]{
-			ID:     "preview-id",
-			Output: MonitorGroupResourceState{MonitorGroupResourceArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "monitor-group-resource", data)
 	if err != nil {

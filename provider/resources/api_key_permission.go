@@ -33,6 +33,13 @@ func (p *ApiKeyPermission) Create(ctx context.Context, req infer.CreateRequest[A
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[ApiKeyPermissionState]{
+			ID:     "preview-id",
+			Output: ApiKeyPermissionState{ApiKeyPermissionArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[ApiKeyPermissionState]{}, err
@@ -43,13 +50,6 @@ func (p *ApiKeyPermission) Create(ctx context.Context, req infer.CreateRequest[A
 		return infer.CreateResponse[ApiKeyPermissionState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[ApiKeyPermissionState]{
-			ID:     "preview-id",
-			Output: ApiKeyPermissionState{ApiKeyPermissionArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "api-key-permission", data)
 	if err != nil {

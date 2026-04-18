@@ -34,6 +34,13 @@ func (o *OnCallDutyPolicy) Create(ctx context.Context, req infer.CreateRequest[O
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[OnCallDutyPolicyState]{
+			ID:     "preview-id",
+			Output: OnCallDutyPolicyState{OnCallDutyPolicyArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[OnCallDutyPolicyState]{}, err
@@ -44,13 +51,6 @@ func (o *OnCallDutyPolicy) Create(ctx context.Context, req infer.CreateRequest[O
 		return infer.CreateResponse[OnCallDutyPolicyState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[OnCallDutyPolicyState]{
-			ID:     "preview-id",
-			Output: OnCallDutyPolicyState{OnCallDutyPolicyArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "on-call-duty-policy", data)
 	if err != nil {

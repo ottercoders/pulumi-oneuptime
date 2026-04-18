@@ -31,6 +31,13 @@ func (t *ProjectSsoTeam) Create(ctx context.Context, req infer.CreateRequest[Pro
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[ProjectSsoTeamState]{
+			ID:     "preview-id",
+			Output: ProjectSsoTeamState{ProjectSsoTeamArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[ProjectSsoTeamState]{}, err
@@ -41,13 +48,6 @@ func (t *ProjectSsoTeam) Create(ctx context.Context, req infer.CreateRequest[Pro
 		return infer.CreateResponse[ProjectSsoTeamState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[ProjectSsoTeamState]{
-			ID:     "preview-id",
-			Output: ProjectSsoTeamState{ProjectSsoTeamArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "project-sso-team", data)
 	if err != nil {

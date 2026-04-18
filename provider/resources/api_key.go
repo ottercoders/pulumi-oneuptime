@@ -39,6 +39,13 @@ func (k *ApiKey) Create(ctx context.Context, req infer.CreateRequest[ApiKeyArgs]
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[ApiKeyState]{
+			ID:     "preview-id",
+			Output: ApiKeyState{ApiKeyArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[ApiKeyState]{}, err
@@ -49,13 +56,6 @@ func (k *ApiKey) Create(ctx context.Context, req infer.CreateRequest[ApiKeyArgs]
 		return infer.CreateResponse[ApiKeyState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[ApiKeyState]{
-			ID:     "preview-id",
-			Output: ApiKeyState{ApiKeyArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "api-key", data)
 	if err != nil {

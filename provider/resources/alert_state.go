@@ -37,6 +37,13 @@ func (a *AlertState) Create(ctx context.Context, req infer.CreateRequest[AlertSt
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[AlertStateState]{
+			ID:     "preview-id",
+			Output: AlertStateState{AlertStateArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[AlertStateState]{}, err
@@ -47,13 +54,6 @@ func (a *AlertState) Create(ctx context.Context, req infer.CreateRequest[AlertSt
 		return infer.CreateResponse[AlertStateState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[AlertStateState]{
-			ID:     "preview-id",
-			Output: AlertStateState{AlertStateArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "alert-state", data)
 	if err != nil {

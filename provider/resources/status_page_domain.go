@@ -36,6 +36,13 @@ func (d *StatusPageDomain) Create(ctx context.Context, req infer.CreateRequest[S
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageDomainState]{
+			ID:     "preview-id",
+			Output: StatusPageDomainState{StatusPageDomainArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageDomainState]{}, err
@@ -46,13 +53,6 @@ func (d *StatusPageDomain) Create(ctx context.Context, req infer.CreateRequest[S
 		return infer.CreateResponse[StatusPageDomainState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageDomainState]{
-			ID:     "preview-id",
-			Output: StatusPageDomainState{StatusPageDomainArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-domain", data)
 	if err != nil {

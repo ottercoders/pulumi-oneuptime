@@ -31,6 +31,13 @@ func (d *Domain) Create(ctx context.Context, req infer.CreateRequest[DomainArgs]
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[DomainState]{
+			ID:     "preview-id",
+			Output: DomainState{DomainArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[DomainState]{}, err
@@ -41,13 +48,6 @@ func (d *Domain) Create(ctx context.Context, req infer.CreateRequest[DomainArgs]
 		return infer.CreateResponse[DomainState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[DomainState]{
-			ID:     "preview-id",
-			Output: DomainState{DomainArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "domain", data)
 	if err != nil {

@@ -34,6 +34,13 @@ func (r *WorkflowVariable) Create(ctx context.Context, req infer.CreateRequest[W
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[WorkflowVariableState]{
+			ID:     "preview-id",
+			Output: WorkflowVariableState{WorkflowVariableArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[WorkflowVariableState]{}, err
@@ -44,13 +51,6 @@ func (r *WorkflowVariable) Create(ctx context.Context, req infer.CreateRequest[W
 		return infer.CreateResponse[WorkflowVariableState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[WorkflowVariableState]{
-			ID:     "preview-id",
-			Output: WorkflowVariableState{WorkflowVariableArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "workflow-variable", data)
 	if err != nil {

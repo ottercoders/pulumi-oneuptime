@@ -33,6 +33,13 @@ func (p *TeamPermission) Create(ctx context.Context, req infer.CreateRequest[Tea
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[TeamPermissionState]{
+			ID:     "preview-id",
+			Output: TeamPermissionState{TeamPermissionArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[TeamPermissionState]{}, err
@@ -43,13 +50,6 @@ func (p *TeamPermission) Create(ctx context.Context, req infer.CreateRequest[Tea
 		return infer.CreateResponse[TeamPermissionState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[TeamPermissionState]{
-			ID:     "preview-id",
-			Output: TeamPermissionState{TeamPermissionArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "team-permission", data)
 	if err != nil {

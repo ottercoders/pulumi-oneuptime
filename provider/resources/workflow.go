@@ -36,6 +36,13 @@ func (w *Workflow) Create(ctx context.Context, req infer.CreateRequest[WorkflowA
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[WorkflowState]{
+			ID:     "preview-id",
+			Output: WorkflowState{WorkflowArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[WorkflowState]{}, err
@@ -46,13 +53,6 @@ func (w *Workflow) Create(ctx context.Context, req infer.CreateRequest[WorkflowA
 		return infer.CreateResponse[WorkflowState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[WorkflowState]{
-			ID:     "preview-id",
-			Output: WorkflowState{WorkflowArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "workflow", data)
 	if err != nil {
