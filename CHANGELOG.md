@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.5.1...v0.5.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* **client:** drop unknown columns from Create/Update bodies ([5700c15](https://github.com/ottercoders/pulumi-oneuptime/commit/5700c15e68caab9959da455903ee0d88510ec33b))
+
 ## [0.5.1](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.5.0...v0.5.1) (2026-04-18)
 
 
