@@ -107,6 +107,33 @@ The provider cannot create the very first OneUptime user or the master API key; 
 4. Set `oneuptime:apiKey` in your Pulumi config (or export `ONEUPTIME_API_KEY`)
 5. Everything else — additional API keys, team membership, permissions, monitors, etc. — is declarative from here on
 
+### Default resources — look up, don't create
+
+OneUptime auto-creates a default set of rows in every project and does not allow them to be deleted. Trying to create a resource with one of these names returns HTTP 400 "already exists":
+
+- `MonitorStatus`: **Operational**, **Degraded**, **Offline**
+- `IncidentState`: **Created**, **Acknowledged**, **Resolved**
+- `IncidentSeverity`: **Critical**, **Major**, **Minor** (varies by OneUptime version)
+- `AlertState` / `AlertSeverity`: similar defaults
+
+Reference these from your program using the corresponding data source instead of declaring a resource:
+
+```typescript
+import * as oneuptime from "@ottercoders/pulumi-oneuptime";
+
+const operational = oneuptime.getMonitorStatusOutput({ name: "Operational" });
+const resolved    = oneuptime.getIncidentStateOutput({ name: "Resolved" });
+const critical    = oneuptime.getIncidentSeverityOutput({ name: "Critical" });
+
+new oneuptime.Monitor("web", {
+    name: "Website",
+    monitorType: "Website",
+    currentMonitorStatusId: operational.resourceId,
+});
+```
+
+Only declare `MonitorStatus` / `IncidentState` / `IncidentSeverity` resources for **custom** statuses/states your workflow adds on top of the defaults.
+
 ### Resource Properties
 
 #### Team
