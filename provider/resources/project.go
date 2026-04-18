@@ -31,16 +31,16 @@ func (p *Project) Create(ctx context.Context, req infer.CreateRequest[ProjectArg
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
-	data, err := ToMap(req.Inputs)
-	if err != nil {
-		return infer.CreateResponse[ProjectState]{}, err
-	}
-
 	if req.DryRun {
 		return infer.CreateResponse[ProjectState]{
 			ID:     "preview-id",
 			Output: ProjectState{ProjectArgs: req.Inputs},
 		}, nil
+	}
+
+	data, err := ToMap(req.Inputs)
+	if err != nil {
+		return infer.CreateResponse[ProjectState]{}, err
 	}
 
 	result, err := c.CreateResource(ctx, "project", data)

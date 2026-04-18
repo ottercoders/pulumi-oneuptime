@@ -31,6 +31,13 @@ func (r *OnCallDutyPolicyUserOwner) Create(ctx context.Context, req infer.Create
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[OnCallDutyPolicyUserOwnerState]{
+			ID:     "preview-id",
+			Output: OnCallDutyPolicyUserOwnerState{OnCallDutyPolicyUserOwnerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[OnCallDutyPolicyUserOwnerState]{}, err
@@ -41,13 +48,6 @@ func (r *OnCallDutyPolicyUserOwner) Create(ctx context.Context, req infer.Create
 		return infer.CreateResponse[OnCallDutyPolicyUserOwnerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[OnCallDutyPolicyUserOwnerState]{
-			ID:     "preview-id",
-			Output: OnCallDutyPolicyUserOwnerState{OnCallDutyPolicyUserOwnerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "on-call-duty-policy-owner-user", data)
 	if err != nil {

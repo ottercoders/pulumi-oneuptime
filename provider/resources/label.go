@@ -33,6 +33,13 @@ func (l *Label) Create(ctx context.Context, req infer.CreateRequest[LabelArgs]) 
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[LabelState]{
+			ID:     "preview-id",
+			Output: LabelState{LabelArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[LabelState]{}, err
@@ -43,13 +50,6 @@ func (l *Label) Create(ctx context.Context, req infer.CreateRequest[LabelArgs]) 
 		return infer.CreateResponse[LabelState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[LabelState]{
-			ID:     "preview-id",
-			Output: LabelState{LabelArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "label", data)
 	if err != nil {

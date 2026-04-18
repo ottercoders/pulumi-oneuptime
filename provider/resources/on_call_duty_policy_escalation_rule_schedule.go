@@ -32,6 +32,13 @@ func (l *OnCallDutyPolicyEscalationRuleSchedule) Create(ctx context.Context, req
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[OnCallDutyPolicyEscalationRuleScheduleState]{
+			ID:     "preview-id",
+			Output: OnCallDutyPolicyEscalationRuleScheduleState{OnCallDutyPolicyEscalationRuleScheduleArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[OnCallDutyPolicyEscalationRuleScheduleState]{}, err
@@ -42,13 +49,6 @@ func (l *OnCallDutyPolicyEscalationRuleSchedule) Create(ctx context.Context, req
 		return infer.CreateResponse[OnCallDutyPolicyEscalationRuleScheduleState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[OnCallDutyPolicyEscalationRuleScheduleState]{
-			ID:     "preview-id",
-			Output: OnCallDutyPolicyEscalationRuleScheduleState{OnCallDutyPolicyEscalationRuleScheduleArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "on-call-duty-policy-escalation-rule-schedule", data)
 	if err != nil {

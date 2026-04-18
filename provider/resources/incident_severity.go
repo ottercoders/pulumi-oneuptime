@@ -34,6 +34,13 @@ func (i *IncidentSeverity) Create(ctx context.Context, req infer.CreateRequest[I
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[IncidentSeverityState]{
+			ID:     "preview-id",
+			Output: IncidentSeverityState{IncidentSeverityArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[IncidentSeverityState]{}, err
@@ -44,13 +51,6 @@ func (i *IncidentSeverity) Create(ctx context.Context, req infer.CreateRequest[I
 		return infer.CreateResponse[IncidentSeverityState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[IncidentSeverityState]{
-			ID:     "preview-id",
-			Output: IncidentSeverityState{IncidentSeverityArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "incident-severity", data)
 	if err != nil {

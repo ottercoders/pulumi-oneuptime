@@ -31,6 +31,13 @@ func (o *StatusPageTeamOwner) Create(ctx context.Context, req infer.CreateReques
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageTeamOwnerState]{
+			ID:     "preview-id",
+			Output: StatusPageTeamOwnerState{StatusPageTeamOwnerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageTeamOwnerState]{}, err
@@ -41,13 +48,6 @@ func (o *StatusPageTeamOwner) Create(ctx context.Context, req infer.CreateReques
 		return infer.CreateResponse[StatusPageTeamOwnerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageTeamOwnerState]{
-			ID:     "preview-id",
-			Output: StatusPageTeamOwnerState{StatusPageTeamOwnerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-owner-team", data)
 	if err != nil {

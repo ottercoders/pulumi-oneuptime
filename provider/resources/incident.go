@@ -36,6 +36,13 @@ func (i *Incident) Create(ctx context.Context, req infer.CreateRequest[IncidentA
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[IncidentState]{
+			ID:     "preview-id",
+			Output: IncidentState{IncidentArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[IncidentState]{}, err
@@ -46,13 +53,6 @@ func (i *Incident) Create(ctx context.Context, req infer.CreateRequest[IncidentA
 		return infer.CreateResponse[IncidentState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[IncidentState]{
-			ID:     "preview-id",
-			Output: IncidentState{IncidentArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "incident", data)
 	if err != nil {

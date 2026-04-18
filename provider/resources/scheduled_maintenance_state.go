@@ -36,6 +36,13 @@ func (s *ScheduledMaintenanceState) Create(ctx context.Context, req infer.Create
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[ScheduledMaintenanceStateState]{
+			ID:     "preview-id",
+			Output: ScheduledMaintenanceStateState{ScheduledMaintenanceStateArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[ScheduledMaintenanceStateState]{}, err
@@ -46,13 +53,6 @@ func (s *ScheduledMaintenanceState) Create(ctx context.Context, req infer.Create
 		return infer.CreateResponse[ScheduledMaintenanceStateState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[ScheduledMaintenanceStateState]{
-			ID:     "preview-id",
-			Output: ScheduledMaintenanceStateState{ScheduledMaintenanceStateArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "scheduled-maintenance-state", data)
 	if err != nil {

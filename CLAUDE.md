@@ -81,6 +81,10 @@ ResourceID string `pulumi:"resourceId" json:"_id"`      // ✓ output-only, not 
 6. Register in `provider/provider.go` under `WithResources(...)`
 7. For secret outputs, implement `infer.ExplicitDependencies` with `WireDependencies` — see `api_key.go`
 
+### DryRun must come first in Create/Update
+
+The `if req.DryRun { return ... }` block must be the **first statement** in both Create and Update — before `ResolveProjectID`, `ToMap`, or any other work that can fail on unknown inputs. During `pulumi preview`, inputs like `projectId` may be unresolved Outputs from sibling resources that haven't been created yet; `ResolveProjectID` would see a nil pointer and error out before preview can short-circuit. Short-circuit first, then do real work.
+
 ## Adding a Lookup Function
 
 1. Add to `provider/resources/lookups.go`

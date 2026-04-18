@@ -33,6 +33,13 @@ func (m *TeamMember) Create(ctx context.Context, req infer.CreateRequest[TeamMem
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[TeamMemberState]{
+			ID:     "preview-id",
+			Output: TeamMemberState{TeamMemberArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[TeamMemberState]{}, err
@@ -43,13 +50,6 @@ func (m *TeamMember) Create(ctx context.Context, req infer.CreateRequest[TeamMem
 		return infer.CreateResponse[TeamMemberState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[TeamMemberState]{
-			ID:     "preview-id",
-			Output: TeamMemberState{TeamMemberArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "team-member", data)
 	if err != nil {

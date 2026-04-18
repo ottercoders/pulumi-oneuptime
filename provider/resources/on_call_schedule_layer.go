@@ -36,6 +36,13 @@ func (r *OnCallScheduleLayer) Create(ctx context.Context, req infer.CreateReques
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[OnCallScheduleLayerState]{
+			ID:     "preview-id",
+			Output: OnCallScheduleLayerState{OnCallScheduleLayerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[OnCallScheduleLayerState]{}, err
@@ -46,13 +53,6 @@ func (r *OnCallScheduleLayer) Create(ctx context.Context, req infer.CreateReques
 		return infer.CreateResponse[OnCallScheduleLayerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[OnCallScheduleLayerState]{
-			ID:     "preview-id",
-			Output: OnCallScheduleLayerState{OnCallScheduleLayerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "on-call-duty-policy-schedule-layer", data)
 	if err != nil {

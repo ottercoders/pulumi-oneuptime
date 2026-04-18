@@ -34,6 +34,13 @@ func (s *StatusPageAnnouncement) Create(ctx context.Context, req infer.CreateReq
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageAnnouncementState]{
+			ID:     "preview-id",
+			Output: StatusPageAnnouncementState{StatusPageAnnouncementArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageAnnouncementState]{}, err
@@ -44,13 +51,6 @@ func (s *StatusPageAnnouncement) Create(ctx context.Context, req infer.CreateReq
 		return infer.CreateResponse[StatusPageAnnouncementState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageAnnouncementState]{
-			ID:     "preview-id",
-			Output: StatusPageAnnouncementState{StatusPageAnnouncementArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-announcement", data)
 	if err != nil {

@@ -34,6 +34,13 @@ func (a *AlertSeverity) Create(ctx context.Context, req infer.CreateRequest[Aler
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[AlertSeverityState]{
+			ID:     "preview-id",
+			Output: AlertSeverityState{AlertSeverityArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[AlertSeverityState]{}, err
@@ -44,13 +51,6 @@ func (a *AlertSeverity) Create(ctx context.Context, req infer.CreateRequest[Aler
 		return infer.CreateResponse[AlertSeverityState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[AlertSeverityState]{
-			ID:     "preview-id",
-			Output: AlertSeverityState{AlertSeverityArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "alert-severity", data)
 	if err != nil {

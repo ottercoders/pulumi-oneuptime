@@ -34,6 +34,13 @@ func (l *StatusPageHeaderLink) Create(ctx context.Context, req infer.CreateReque
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageHeaderLinkState]{
+			ID:     "preview-id",
+			Output: StatusPageHeaderLinkState{StatusPageHeaderLinkArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageHeaderLinkState]{}, err
@@ -44,13 +51,6 @@ func (l *StatusPageHeaderLink) Create(ctx context.Context, req infer.CreateReque
 		return infer.CreateResponse[StatusPageHeaderLinkState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageHeaderLinkState]{
-			ID:     "preview-id",
-			Output: StatusPageHeaderLinkState{StatusPageHeaderLinkArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-header-link", data)
 	if err != nil {

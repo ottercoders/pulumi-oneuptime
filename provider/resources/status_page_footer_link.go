@@ -34,6 +34,13 @@ func (l *StatusPageFooterLink) Create(ctx context.Context, req infer.CreateReque
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageFooterLinkState]{
+			ID:     "preview-id",
+			Output: StatusPageFooterLinkState{StatusPageFooterLinkArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageFooterLinkState]{}, err
@@ -44,13 +51,6 @@ func (l *StatusPageFooterLink) Create(ctx context.Context, req infer.CreateReque
 		return infer.CreateResponse[StatusPageFooterLinkState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageFooterLinkState]{
-			ID:     "preview-id",
-			Output: StatusPageFooterLinkState{StatusPageFooterLinkArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-footer-link", data)
 	if err != nil {

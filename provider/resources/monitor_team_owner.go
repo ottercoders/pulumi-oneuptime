@@ -31,6 +31,13 @@ func (o *MonitorTeamOwner) Create(ctx context.Context, req infer.CreateRequest[M
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[MonitorTeamOwnerState]{
+			ID:     "preview-id",
+			Output: MonitorTeamOwnerState{MonitorTeamOwnerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[MonitorTeamOwnerState]{}, err
@@ -41,13 +48,6 @@ func (o *MonitorTeamOwner) Create(ctx context.Context, req infer.CreateRequest[M
 		return infer.CreateResponse[MonitorTeamOwnerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[MonitorTeamOwnerState]{
-			ID:     "preview-id",
-			Output: MonitorTeamOwnerState{MonitorTeamOwnerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "monitor-owner-team", data)
 	if err != nil {

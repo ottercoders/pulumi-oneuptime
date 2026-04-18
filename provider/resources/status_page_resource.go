@@ -39,6 +39,13 @@ func (s *StatusPageResource) Create(ctx context.Context, req infer.CreateRequest
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageResourceState]{
+			ID:     "preview-id",
+			Output: StatusPageResourceState{StatusPageResourceArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageResourceState]{}, err
@@ -49,13 +56,6 @@ func (s *StatusPageResource) Create(ctx context.Context, req infer.CreateRequest
 		return infer.CreateResponse[StatusPageResourceState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageResourceState]{
-			ID:     "preview-id",
-			Output: StatusPageResourceState{StatusPageResourceArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-resource", data)
 	if err != nil {

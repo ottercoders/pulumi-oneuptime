@@ -31,6 +31,13 @@ func (r *IncidentTeamOwner) Create(ctx context.Context, req infer.CreateRequest[
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[IncidentTeamOwnerState]{
+			ID:     "preview-id",
+			Output: IncidentTeamOwnerState{IncidentTeamOwnerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[IncidentTeamOwnerState]{}, err
@@ -41,13 +48,6 @@ func (r *IncidentTeamOwner) Create(ctx context.Context, req infer.CreateRequest[
 		return infer.CreateResponse[IncidentTeamOwnerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[IncidentTeamOwnerState]{
-			ID:     "preview-id",
-			Output: IncidentTeamOwnerState{IncidentTeamOwnerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "incident-owner-team", data)
 	if err != nil {

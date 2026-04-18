@@ -31,6 +31,13 @@ func (r *ScheduledMaintenanceTeamOwner) Create(ctx context.Context, req infer.Cr
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[ScheduledMaintenanceTeamOwnerState]{
+			ID:     "preview-id",
+			Output: ScheduledMaintenanceTeamOwnerState{ScheduledMaintenanceTeamOwnerArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[ScheduledMaintenanceTeamOwnerState]{}, err
@@ -41,13 +48,6 @@ func (r *ScheduledMaintenanceTeamOwner) Create(ctx context.Context, req infer.Cr
 		return infer.CreateResponse[ScheduledMaintenanceTeamOwnerState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[ScheduledMaintenanceTeamOwnerState]{
-			ID:     "preview-id",
-			Output: ScheduledMaintenanceTeamOwnerState{ScheduledMaintenanceTeamOwnerArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "scheduled-maintenance-owner-team", data)
 	if err != nil {

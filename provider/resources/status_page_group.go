@@ -34,6 +34,13 @@ func (s *StatusPageGroup) Create(ctx context.Context, req infer.CreateRequest[St
 	cfg := infer.GetConfig[*Config](ctx)
 	c := cfg.GetClient()
 
+	if req.DryRun {
+		return infer.CreateResponse[StatusPageGroupState]{
+			ID:     "preview-id",
+			Output: StatusPageGroupState{StatusPageGroupArgs: req.Inputs},
+		}, nil
+	}
+
 	projectID, err := ResolveProjectID(req.Inputs.ProjectID, cfg.ProjectID)
 	if err != nil {
 		return infer.CreateResponse[StatusPageGroupState]{}, err
@@ -44,13 +51,6 @@ func (s *StatusPageGroup) Create(ctx context.Context, req infer.CreateRequest[St
 		return infer.CreateResponse[StatusPageGroupState]{}, err
 	}
 	data["projectId"] = projectID
-
-	if req.DryRun {
-		return infer.CreateResponse[StatusPageGroupState]{
-			ID:     "preview-id",
-			Output: StatusPageGroupState{StatusPageGroupArgs: req.Inputs},
-		}, nil
-	}
 
 	result, err := c.CreateResource(ctx, "status-page-group", data)
 	if err != nil {
