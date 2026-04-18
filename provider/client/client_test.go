@@ -230,3 +230,235 @@ func isAPIError(err error, target **APIError) bool {
 	}
 	return ok
 }
+
+func TestCreateResource_TenantFromBody(t *testing.T) {
+	var gotTenant string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTenant = r.Header.Get("tenantid")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "abc"})
+	}))
+	defer server.Close()
+
+	// Client has no TenantID configured; the body's projectId must supply it.
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	_, err := c.CreateResource(context.Background(), "monitor", map[string]interface{}{
+		"name":      "m",
+		"projectId": "proj-from-arg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotTenant != "proj-from-arg" {
+		t.Errorf("expected tenantid header 'proj-from-arg', got %q", gotTenant)
+	}
+}
+
+func TestCreateResource_BodyTenantOverridesConfig(t *testing.T) {
+	var gotTenant string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTenant = r.Header.Get("tenantid")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "abc"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", TenantID: "config-proj", HTTPClient: http.DefaultClient}
+	_, err := c.CreateResource(context.Background(), "monitor", map[string]interface{}{
+		"projectId": "arg-proj",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotTenant != "arg-proj" {
+		t.Errorf("expected body projectId to win: got tenantid %q", gotTenant)
+	}
+}
+
+func TestCreateResource_FallsBackToConfigTenant(t *testing.T) {
+	var gotTenant string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTenant = r.Header.Get("tenantid")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "abc"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", TenantID: "config-proj", HTTPClient: http.DefaultClient}
+	_, err := c.CreateResource(context.Background(), "project", map[string]interface{}{
+		"name": "p",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotTenant != "config-proj" {
+		t.Errorf("expected tenantid header 'config-proj', got %q", gotTenant)
+	}
+}
+
+func TestUpdateResource_TenantFromBody(t *testing.T) {
+	var gotTenant string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTenant = r.Header.Get("tenantid")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	err := c.UpdateResource(context.Background(), "monitor", "abc", map[string]interface{}{
+		"projectId": "proj-from-arg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if gotTenant != "proj-from-arg" {
+		t.Errorf("expected tenantid header 'proj-from-arg', got %q", gotTenant)
+	}
+}
+
+func TestReadResource_RetriesOnUnknownColumn(t *testing.T) {
+	var attempts int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		sel, _ := body["select"].(map[string]interface{})
+
+		// First request asks for the missing "description" column — reject it.
+		if _, hasDesc := sel["description"]; hasDesc {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "TableColumnMetadata not found for description column",
+			})
+			return
+		}
+
+		// Second request omits description — succeed.
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"_id":  "abc",
+			"name": "Engineering",
+		})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	result, err := c.ReadResource(context.Background(), "team", "abc", map[string]bool{
+		"_id":         true,
+		"name":        true,
+		"description": true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result["name"] != "Engineering" {
+		t.Errorf("expected name Engineering, got %v", result["name"])
+	}
+	if attempts != 2 {
+		t.Errorf("expected 2 attempts (initial + retry), got %d", attempts)
+	}
+}
+
+func TestReadResource_CachesUnknownColumn(t *testing.T) {
+	var saw []bool // whether each call included "description"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		sel, _ := body["select"].(map[string]interface{})
+		_, hasDesc := sel["description"]
+		saw = append(saw, hasDesc)
+
+		if hasDesc {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "TableColumnMetadata not found for description column",
+			})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"_id": "abc"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	sel := map[string]bool{"_id": true, "description": true}
+
+	// First read: server rejects, client retries without description.
+	if _, err := c.ReadResource(context.Background(), "team", "abc", sel); err != nil {
+		t.Fatalf("first read: %v", err)
+	}
+	// Second read: client should remember description is bad and skip it upfront.
+	if _, err := c.ReadResource(context.Background(), "team", "abc", sel); err != nil {
+		t.Fatalf("second read: %v", err)
+	}
+
+	// Expect: first call had description (rejected), second call didn't (retry succeeded),
+	// third call (fresh ReadResource) skipped it upfront.
+	if len(saw) != 3 {
+		t.Fatalf("expected 3 total server calls, got %d (saw=%v)", len(saw), saw)
+	}
+	if !saw[0] || saw[1] || saw[2] {
+		t.Errorf("expected description in call 1 only; saw=%v", saw)
+	}
+}
+
+func TestListResources_RetriesOnUnknownColumn(t *testing.T) {
+	var attempts int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		sel, _ := body["select"].(map[string]interface{})
+		if _, bad := sel["isDegradedState"]; bad {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "TableColumnMetadata not found for isDegradedState column",
+			})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"data": []interface{}{map[string]interface{}{"_id": "abc", "name": "Operational"}},
+		})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	results, err := c.ListResources(context.Background(), "monitor-status", map[string]interface{}{"name": "Operational"}, map[string]bool{
+		"_id":             true,
+		"name":            true,
+		"isDegradedState": true,
+	}, 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 || results[0]["name"] != "Operational" {
+		t.Errorf("unexpected results: %v", results)
+	}
+	if attempts != 2 {
+		t.Errorf("expected 2 attempts, got %d", attempts)
+	}
+}
+
+func TestReadResource_OtherBadRequestNotRetried(t *testing.T) {
+	var attempts int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts++
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "malformed id"})
+	}))
+	defer server.Close()
+
+	c := &Client{BaseURL: server.URL, APIKey: "k", HTTPClient: http.DefaultClient}
+	_, err := c.ReadResource(context.Background(), "team", "abc", map[string]bool{"name": true})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if attempts != 1 {
+		t.Errorf("expected 1 attempt (no retry on unrelated 400), got %d", attempts)
+	}
+}
