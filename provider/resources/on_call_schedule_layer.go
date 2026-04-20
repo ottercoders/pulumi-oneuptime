@@ -9,14 +9,18 @@ import (
 type OnCallScheduleLayer struct{}
 
 type OnCallScheduleLayerArgs struct {
-	ProjectID                  *string                `pulumi:"projectId,optional" json:"projectId,omitempty"`
-	OnCallDutyPolicyScheduleID string                 `pulumi:"onCallDutyPolicyScheduleId" json:"onCallDutyPolicyScheduleId"`
-	Name                       string                 `pulumi:"name" json:"name"`
-	Description                *string                `pulumi:"description,optional" json:"description,omitempty"`
-	Order                      *int                   `pulumi:"order,optional" json:"order,omitempty"`
-	StartsAt                   *string                `pulumi:"startsAt,optional" json:"startsAt,omitempty"`
-	Rotation                   map[string]interface{} `pulumi:"rotation,optional" json:"rotation,omitempty"`
-	RestrictionTimes           map[string]interface{} `pulumi:"restrictionTimes,optional" json:"restrictionTimes,omitempty"`
+	ProjectID                  *string           `pulumi:"projectId,optional" json:"projectId,omitempty"`
+	OnCallDutyPolicyScheduleID string            `pulumi:"onCallDutyPolicyScheduleId" json:"onCallDutyPolicyScheduleId"`
+	Name                       string            `pulumi:"name" json:"name"`
+	Description                *string           `pulumi:"description,optional" json:"description,omitempty"`
+	Order                      *int              `pulumi:"order,optional" json:"order,omitempty"`
+	StartsAt                   *string           `pulumi:"startsAt,optional" json:"startsAt,omitempty"`
+	HandOffTime                *string           `pulumi:"handOffTime,optional" json:"handOffTime,omitempty"`
+	// Rotation and RestrictionTimes are structured JSON on the server wrapped
+	// in {_type, value} envelopes; both fields carry json:"-" and are
+	// re-attached in the correct wire form by the envelope helpers.
+	Rotation         *Recurring        `pulumi:"rotation,optional" json:"-"`
+	RestrictionTimes *RestrictionTimes `pulumi:"restrictionTimes,optional" json:"-"`
 }
 
 type OnCallScheduleLayerState struct {
@@ -53,6 +57,8 @@ func (r *OnCallScheduleLayer) Create(ctx context.Context, req infer.CreateReques
 		return infer.CreateResponse[OnCallScheduleLayerState]{}, err
 	}
 	data["projectId"] = projectID
+	attachRotation(data, "rotation", req.Inputs.Rotation)
+	attachRestrictionTimes(data, "restrictionTimes", req.Inputs.RestrictionTimes)
 
 	result, err := c.CreateResource(ctx, "on-call-duty-policy-schedule-layer", data)
 	if err != nil {
@@ -112,6 +118,8 @@ func (r *OnCallScheduleLayer) Update(ctx context.Context, req infer.UpdateReques
 	if err != nil {
 		return infer.UpdateResponse[OnCallScheduleLayerState]{}, err
 	}
+	attachRotation(data, "rotation", req.Inputs.Rotation)
+	attachRestrictionTimes(data, "restrictionTimes", req.Inputs.RestrictionTimes)
 
 	if err := c.UpdateResource(ctx, "on-call-duty-policy-schedule-layer", req.ID, data); err != nil {
 		return infer.UpdateResponse[OnCallScheduleLayerState]{}, err

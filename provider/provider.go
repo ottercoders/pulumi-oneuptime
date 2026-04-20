@@ -67,6 +67,8 @@ func Provider() p.Provider {
 			infer.Resource[*resources.OnCallScheduleLayerUser, resources.OnCallScheduleLayerUserArgs, resources.OnCallScheduleLayerUserState](&resources.OnCallScheduleLayerUser{}),
 			infer.Resource[*resources.OnCallDutyPolicyTeamOwner, resources.OnCallDutyPolicyTeamOwnerArgs, resources.OnCallDutyPolicyTeamOwnerState](&resources.OnCallDutyPolicyTeamOwner{}),
 			infer.Resource[*resources.OnCallDutyPolicyUserOwner, resources.OnCallDutyPolicyUserOwnerArgs, resources.OnCallDutyPolicyUserOwnerState](&resources.OnCallDutyPolicyUserOwner{}),
+			infer.Resource[*resources.OnCallDutyPolicyEscalationRuleUser, resources.OnCallDutyPolicyEscalationRuleUserArgs, resources.OnCallDutyPolicyEscalationRuleUserState](&resources.OnCallDutyPolicyEscalationRuleUser{}),
+			infer.Resource[*resources.OnCallDutyPolicyEscalationRuleTeam, resources.OnCallDutyPolicyEscalationRuleTeamArgs, resources.OnCallDutyPolicyEscalationRuleTeamState](&resources.OnCallDutyPolicyEscalationRuleTeam{}),
 			infer.Resource[*resources.MonitorStatus, resources.MonitorStatusArgs, resources.MonitorStatusState](&resources.MonitorStatus{}),
 			infer.Resource[*resources.MonitorProbe, resources.MonitorProbeArgs, resources.MonitorProbeState](&resources.MonitorProbe{}),
 			infer.Resource[*resources.MonitorSecret, resources.MonitorSecretArgs, resources.MonitorSecretState](&resources.MonitorSecret{}),
