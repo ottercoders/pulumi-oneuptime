@@ -69,6 +69,8 @@ func Provider() p.Provider {
 			infer.Resource[*resources.OnCallDutyPolicyUserOwner, resources.OnCallDutyPolicyUserOwnerArgs, resources.OnCallDutyPolicyUserOwnerState](&resources.OnCallDutyPolicyUserOwner{}),
 			infer.Resource[*resources.MonitorStatus, resources.MonitorStatusArgs, resources.MonitorStatusState](&resources.MonitorStatus{}),
 			infer.Resource[*resources.MonitorProbe, resources.MonitorProbeArgs, resources.MonitorProbeState](&resources.MonitorProbe{}),
+			infer.Resource[*resources.MonitorSecret, resources.MonitorSecretArgs, resources.MonitorSecretState](&resources.MonitorSecret{}),
+			infer.Resource[*resources.MonitorCustomField, resources.MonitorCustomFieldArgs, resources.MonitorCustomFieldState](&resources.MonitorCustomField{}),
 			infer.Resource[*resources.IncidentTeamOwner, resources.IncidentTeamOwnerArgs, resources.IncidentTeamOwnerState](&resources.IncidentTeamOwner{}),
 			infer.Resource[*resources.IncidentUserOwner, resources.IncidentUserOwnerArgs, resources.IncidentUserOwnerState](&resources.IncidentUserOwner{}),
 			infer.Resource[*resources.WorkflowVariable, resources.WorkflowVariableArgs, resources.WorkflowVariableState](&resources.WorkflowVariable{}),
@@ -86,6 +88,7 @@ func Provider() p.Provider {
 			infer.Function[*resources.GetAlertState, resources.LookupByNameArgs, resources.LookupResult](&resources.GetAlertState{}),
 			infer.Function[*resources.GetAlertSeverity, resources.LookupByNameArgs, resources.LookupResult](&resources.GetAlertSeverity{}),
 			infer.Function[*resources.GetOnCallDutyPolicy, resources.LookupByNameArgs, resources.LookupResult](&resources.GetOnCallDutyPolicy{}),
+			infer.Function[*resources.GetMonitorSecret, resources.LookupByNameArgs, resources.LookupResult](&resources.GetMonitorSecret{}),
 		).
 		Build()
 	if err != nil {

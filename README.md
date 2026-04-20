@@ -145,14 +145,76 @@ Only declare `MonitorStatus` / `IncidentState` / `IncidentSeverity` resources fo
 
 #### Monitor
 
-| Property                    | Type   | Required | Description                        |
-|-----------------------------|--------|----------|------------------------------------|
-| `name`                      | string | Yes      | Monitor name                       |
-| `monitorType`               | string | Yes      | Type of monitor (e.g. API, Website)|
-| `currentMonitorStatusId`    | string | Yes      | ID of the current monitor status   |
-| `description`               | string | No       | Monitor description                |
-| `disableActiveMonitoring`   | bool   | No       | Disable active monitoring          |
-| `monitoringInterval`        | string | No       | Monitoring check interval          |
+| Property                         | Type                  | Required | Description                                                                                                               |
+|----------------------------------|-----------------------|----------|---------------------------------------------------------------------------------------------------------------------------|
+| `name`                           | string                | Yes      | Monitor name                                                                                                              |
+| `monitorType`                    | string                | Yes      | One of the 23 `MonitorType` values — e.g. `"Website"`, `"API"`, `"Ping"`, `"Port"`, `"Incoming Request"`, `"Server"`       |
+| `currentMonitorStatusId`         | string                | Yes      | ID of the current monitor status (from a `MonitorStatus` resource or `getMonitorStatus` data source)                     |
+| `description`                    | string                | No       | Monitor description                                                                                                       |
+| `disableActiveMonitoring`        | bool                  | No       | Disable active monitoring                                                                                                 |
+| `monitoringInterval`             | string                | No       | Check interval (e.g. `"1m"`, `"5m"`)                                                                                       |
+| `monitorSteps`                   | `MonitorStep[]`       | No (Yes for non-Manual) | Probe steps with destinations, request config, and decision criteria. See [Monitor steps](#monitor-steps) below |
+| `defaultMonitorStatusId`         | string                | No       | Fallback status when no criteria match                                                                                     |
+| `labels`                         | `string[]`            | No       | Label resource IDs to attach (ManyToMany)                                                                                 |
+| `customFields`                   | map                   | No       | Free-form values keyed by `MonitorCustomField` name                                                                       |
+| `postUpdatesToWorkspaceChannels` | `WorkspaceChannelRef[]` | No    | Slack/Teams channels to notify on status changes                                                                          |
+
+Output-only: `resourceId`, `slug`, `createdAt`, `updatedAt`, `incomingRequestSecretKey` (secret), `serverMonitorSecretKey` (secret), `incomingEmailSecretKey` (secret), `incomingMonitorRequest`, `incomingEmailMonitorRequest`, `serverMonitorResponse`.
+
+##### Monitor steps
+
+Each `MonitorStep` configures one probe and its decision logic. Populate only the sub-monitor field (`logMonitor`, `snmpMonitor`, `dnsMonitor`, etc.) that matches the parent monitor's `monitorType`; omit the rest. A minimal Website step looks like:
+
+```typescript
+import * as oneuptime from "@ottercoders/pulumi-oneuptime";
+
+const offline = oneuptime.getMonitorStatusOutput({ name: "Offline" });
+const operational = oneuptime.getMonitorStatusOutput({ name: "Operational" });
+
+new oneuptime.Monitor("web", {
+    name: "Marketing site",
+    monitorType: "Website",
+    currentMonitorStatusId: operational.resourceId,
+    monitorSteps: [{
+        id: "step-root",
+        monitorDestination: "https://example.com",
+        requestType: "GET",
+        monitorCriteria: {
+            criteriaInstances: [{
+                id: "down-on-5xx",
+                name: "Down if 5xx",
+                description: "Server-side failure",
+                filterCondition: "Any",
+                filters: [{
+                    checkOn: "Response Status Code",
+                    filterType: "Greater Than",
+                    value: "499",
+                }],
+                monitorStatusId: offline.resourceId,
+                changeMonitorStatus: true,
+            }],
+        },
+    }],
+});
+```
+
+For an API monitor add `requestHeaders`/`requestBody` on the step. For SNMP/DNS/Kubernetes/Docker/Synthetic monitors populate the matching `snmpMonitor` / `dnsMonitor` / `kubernetesMonitor` / `dockerMonitor` / `customCode` fields and set `filters[].checkOn` to the appropriate value (`"SNMP OID Value"`, `"DNS Response Time (in ms)"`, `"CPU Usage (in %)"`, etc.). `filters[].checkOn` and `filters[].filterType` use OneUptime's full display strings verbatim.
+
+##### Server-generated secret keys
+
+IncomingRequest, Server, and IncomingEmail monitor types expose auto-generated secret keys the server wires at create time. Read them from the outputs to construct webhook/agent URLs:
+
+```typescript
+const server = new oneuptime.Monitor("db", {
+    name: "Database host",
+    monitorType: "Server",
+    currentMonitorStatusId: operational.resourceId,
+});
+
+export const agentUrl = pulumi.interpolate`https://oneuptime.example.com/api/server-monitor/response/ingest/${server.serverMonitorSecretKey}`;
+```
+
+Pulumi encrypts these in state (`AlwaysSecret`) and redacts them from `pulumi stack output` unless `--show-secrets` is passed.
 
 #### StatusPage
 

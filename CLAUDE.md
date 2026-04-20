@@ -85,6 +85,16 @@ ResourceID string `pulumi:"resourceId" json:"_id"`      // ✓ output-only, not 
 
 The `if req.DryRun { return ... }` block must be the **first statement** in both Create and Update — before `ResolveProjectID`, `ToMap`, or any other work that can fail on unknown inputs. During `pulumi preview`, inputs like `projectId` may be unresolved Outputs from sibling resources that haven't been created yet; `ResolveProjectID` would see a nil pointer and error out before preview can short-circuit. Short-circuit first, then do real work.
 
+### Nested-struct fields that need custom wire shaping
+
+OneUptime sometimes demands a different wire shape than `ToMap` would produce by default — e.g. `monitorSteps` is wrapped in a `{_type: "MonitorSteps", value: {...}}` envelope with further nested envelopes inside, and ManyToMany references (`labels`, `monitors`) need `[{_id: "..."}]` not plain ID arrays. The pattern:
+
+1. Tag the Go field `json:"-"` so the default `ToMap` skips it (still keep a `pulumi:"..."` tag so Pulumi exposes it).
+2. In `Create` and `Update`, after `ToMap`, call a small helper (see `provider/resources/monitor_steps_envelope.go`) that reads the typed input and writes the correctly-shaped value back into `data[key]`.
+3. Share the helper across resources (e.g. `attachIDRefs(data, "monitors", ids)`) when multiple resources need the same transform.
+
+Don't try to express the envelope shape via struct tags — it's recursive and the default encoder will produce wrong results.
+
 ## Adding a Lookup Function
 
 1. Add to `provider/resources/lookups.go`
