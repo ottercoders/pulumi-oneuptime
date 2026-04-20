@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.5.2...v0.6.0) (2026-04-20)
+
+
+### Features
+
+* **monitor:** full monitor step schema + MonitorSecret/MonitorCustomField ([13a5d13](https://github.com/ottercoders/pulumi-oneuptime/commit/13a5d13c02c2210aeb7057614f41d914a50b9ecf))
+
+
+### Bug Fixes
+
+* **oncall:** wire paging targets on escalation rules + typed rotation/restriction ([aee0de7](https://github.com/ottercoders/pulumi-oneuptime/commit/aee0de7c2847b38c3237def96df07505332b1b79))
+
 ## [0.5.2](https://github.com/ottercoders/pulumi-oneuptime/compare/v0.5.1...v0.5.2) (2026-04-18)
 
 
