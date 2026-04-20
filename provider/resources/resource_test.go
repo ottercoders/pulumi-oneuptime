@@ -348,6 +348,273 @@ func TestProjectResource_LifeCycle(t *testing.T) {
 	}
 }
 
+func TestMonitorResource_LifeCycle_Website(t *testing.T) {
+	t.Parallel()
+
+	var lastCreateBody map[string]interface{}
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/monitor":
+			data, _ := body["data"].(map[string]interface{})
+			lastCreateBody = data
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":                      "mon-1",
+				"name":                     data["name"],
+				"projectId":                data["projectId"],
+				"slug":                     "website",
+				"createdAt":                "2024-01-01T00:00:00Z",
+				"updatedAt":                "2024-01-01T00:00:00Z",
+				"incomingRequestSecretKey": "secret-incoming",
+				"serverMonitorSecretKey":   "secret-server",
+				"incomingEmailSecretKey":   "secret-email",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":                      "mon-1",
+				"name":                     "Website",
+				"projectId":                "test-project-id",
+				"slug":                     "website",
+				"createdAt":                "2024-01-01T00:00:00Z",
+				"updatedAt":                "2024-01-01T00:00:00Z",
+				"incomingRequestSecretKey": "secret-incoming",
+				"serverMonitorSecretKey":   "secret-server",
+				"incomingEmailSecretKey":   "secret-email",
+			})
+		case r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/api/monitor/"):
+			w.WriteHeader(http.StatusOK)
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/api/monitor/"):
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:Monitor", "web")
+
+	stepsArg := property.NewArray([]property.Value{
+		property.New(property.NewMap(map[string]property.Value{
+			"id":                 property.New("step-1"),
+			"monitorDestination": property.New("https://example.com"),
+			"requestType":        property.New("GET"),
+			"monitorCriteria": property.New(property.NewMap(map[string]property.Value{
+				"criteriaInstances": property.New(property.NewArray([]property.Value{
+					property.New(property.NewMap(map[string]property.Value{
+						"id":              property.New("ci-1"),
+						"name":            property.New("Down if 5xx"),
+						"description":     property.New(""),
+						"filterCondition": property.New("Any"),
+						"filters": property.New(property.NewArray([]property.Value{
+							property.New(property.NewMap(map[string]property.Value{
+								"checkOn":    property.New("Response Status Code"),
+								"filterType": property.New("Greater Than"),
+								"value":      property.New("499"),
+							})),
+						})),
+					})),
+				})),
+			})),
+		})),
+	})
+
+	createResp, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"name":                   property.New("Website"),
+			"monitorType":            property.New("Website"),
+			"currentMonitorStatusId": property.New("status-operational"),
+			"monitorSteps":           property.New(stepsArg),
+			"labels":                 property.New(property.NewArray([]property.Value{property.New("lbl-prod")})),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create failed: %v", err)
+	}
+	if createResp.ID != "mon-1" {
+		t.Errorf("expected ID mon-1, got %q", createResp.ID)
+	}
+
+	// Verify the monitorSteps envelope made it onto the wire.
+	envOuter, ok := lastCreateBody["monitorSteps"].(map[string]interface{})
+	if !ok || envOuter["_type"] != "MonitorSteps" {
+		t.Fatalf("monitorSteps envelope missing on wire; got %v", lastCreateBody["monitorSteps"])
+	}
+	envValue := envOuter["value"].(map[string]interface{})
+	instArr, _ := envValue["monitorStepsInstanceArray"].([]interface{})
+	if len(instArr) != 1 {
+		t.Fatalf("expected 1 step on wire, got %d", len(instArr))
+	}
+	stepEnv, _ := instArr[0].(map[string]interface{})
+	if stepEnv["_type"] != "MonitorStep" {
+		t.Errorf("step _type wrong: %v", stepEnv["_type"])
+	}
+	// Label ManyToMany shape
+	lbls, _ := lastCreateBody["labels"].([]interface{})
+	if len(lbls) != 1 || lbls[0].(map[string]interface{})["_id"] != "lbl-prod" {
+		t.Errorf("labels wire shape wrong: %v", lastCreateBody["labels"])
+	}
+
+	// Read
+	readResp, err := s.Read(p.ReadRequest{
+		ID:         createResp.ID,
+		Urn:        urn,
+		Properties: createResp.Properties,
+		Inputs:     property.Map{},
+	})
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if readResp.ID != "mon-1" {
+		t.Errorf("read ID = %q", readResp.ID)
+	}
+
+	// Delete
+	if err := s.Delete(p.DeleteRequest{ID: createResp.ID, Urn: urn, Properties: createResp.Properties}); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+}
+
+func TestMonitorSecretResource_LifeCycle(t *testing.T) {
+	t.Parallel()
+
+	var createBody map[string]interface{}
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/monitor-secret":
+			data, _ := body["data"].(map[string]interface{})
+			createBody = data
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":       "sec-1",
+				"name":      data["name"],
+				"projectId": data["projectId"],
+				"createdAt": "2024-01-01T00:00:00Z",
+				"updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			// Server never returns secretValue.
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":       "sec-1",
+				"name":      "api-token",
+				"projectId": "test-project-id",
+				"createdAt": "2024-01-01T00:00:00Z",
+				"updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:MonitorSecret", "s")
+
+	createResp, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"name":        property.New("api-token"),
+			"secretValue": property.New("sk-abcdef").WithSecret(true),
+			"monitorIds":  property.New(property.NewArray([]property.Value{property.New("m1"), property.New("m2")})),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if createResp.ID != "sec-1" {
+		t.Errorf("ID = %q", createResp.ID)
+	}
+
+	// Server received the secret value on create.
+	if createBody["secretValue"] != "sk-abcdef" {
+		t.Errorf("secretValue not on wire: %v", createBody["secretValue"])
+	}
+	// monitors transformed to ManyToMany shape.
+	mons, _ := createBody["monitors"].([]interface{})
+	if len(mons) != 2 {
+		t.Fatalf("expected 2 monitors refs, got %d (%v)", len(mons), createBody["monitors"])
+	}
+
+	// Read preserves secretValue from prior state even though server doesn't return it.
+	readResp, err := s.Read(p.ReadRequest{
+		ID:         createResp.ID,
+		Urn:        urn,
+		Properties: createResp.Properties,
+		Inputs: property.NewMap(map[string]property.Value{
+			"name":        property.New("api-token"),
+			"secretValue": property.New("sk-abcdef").WithSecret(true),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if got, ok := readResp.Properties.GetOk("secretValue"); !ok || got.AsString() != "sk-abcdef" {
+		t.Errorf("Read should preserve secretValue from prior state; got %v (ok=%v)", got, ok)
+	}
+}
+
+func TestMonitorCustomFieldResource_LifeCycle(t *testing.T) {
+	t.Parallel()
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/monitor-custom-field":
+			data, _ := body["data"].(map[string]interface{})
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":             "cf-1",
+				"name":            data["name"],
+				"customFieldType": data["customFieldType"],
+				"projectId":       data["projectId"],
+				"createdAt":       "2024-01-01T00:00:00Z",
+				"updatedAt":       "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":             "cf-1",
+				"name":            "Environment",
+				"customFieldType": "Text",
+				"projectId":       "test-project-id",
+				"createdAt":       "2024-01-01T00:00:00Z",
+				"updatedAt":       "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:MonitorCustomField", "cf")
+
+	resp, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"name":            property.New("Environment"),
+			"customFieldType": property.New("Text"),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if resp.ID != "cf-1" {
+		t.Errorf("ID = %q", resp.ID)
+	}
+}
+
 func TestTeamResource_ApiKeyHeader(t *testing.T) {
 	t.Parallel()
 

@@ -234,6 +234,24 @@ func (f *GetAlertSeverity) Invoke(ctx context.Context, req infer.FunctionRequest
 	return infer.FunctionResponse[LookupResult]{Output: result}, nil
 }
 
+// ── GetMonitorSecret ──
+
+type GetMonitorSecret struct{}
+
+var _ infer.Annotated = (*GetMonitorSecret)(nil)
+
+func (f *GetMonitorSecret) Annotate(a infer.Annotator) {
+	a.Describe(f, "Look up a OneUptime Monitor Secret by name. SecretValue is not returned.")
+}
+
+func (f *GetMonitorSecret) Invoke(ctx context.Context, req infer.FunctionRequest[LookupByNameArgs]) (infer.FunctionResponse[LookupResult], error) {
+	result, err := lookupByName(ctx, "monitor-secret", req.Input.Name)
+	if err != nil {
+		return infer.FunctionResponse[LookupResult]{}, err
+	}
+	return infer.FunctionResponse[LookupResult]{Output: result}, nil
+}
+
 // ── GetOnCallDutyPolicy ──
 
 type GetOnCallDutyPolicy struct{}
