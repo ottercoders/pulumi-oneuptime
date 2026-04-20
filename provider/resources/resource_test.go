@@ -615,6 +615,191 @@ func TestMonitorCustomFieldResource_LifeCycle(t *testing.T) {
 	}
 }
 
+func TestOnCallScheduleLayer_RotationEnvelopeOnWire(t *testing.T) {
+	t.Parallel()
+
+	var createBody map[string]interface{}
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/on-call-duty-policy-schedule-layer":
+			createBody, _ = body["data"].(map[string]interface{})
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":       "layer-1",
+				"name":      createBody["name"],
+				"projectId": createBody["projectId"],
+				"createdAt": "2024-01-01T00:00:00Z",
+				"updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id": "layer-1", "name": "Primary", "projectId": "test-project-id",
+				"createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:OnCallScheduleLayer", "primary")
+	_, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"onCallDutyPolicyScheduleId": property.New("sched-1"),
+			"name":                       property.New("Primary"),
+			"rotation": property.New(property.NewMap(map[string]property.Value{
+				"intervalType":  property.New("Week"),
+				"intervalCount": property.New(1.0),
+			})),
+			"restrictionTimes": property.New(property.NewMap(map[string]property.Value{
+				"restrictionType": property.New("Weekly"),
+				"weeklyRestrictionTimes": property.New(property.NewArray([]property.Value{
+					property.New(property.NewMap(map[string]property.Value{
+						"startDay":  property.New("Monday"),
+						"endDay":    property.New("Friday"),
+						"startTime": property.New("09:00"),
+						"endTime":   property.New("17:00"),
+					})),
+				})),
+			})),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	rot, ok := createBody["rotation"].(map[string]interface{})
+	if !ok || rot["_type"] != "Recurring" {
+		t.Fatalf("rotation envelope missing on wire: %v", createBody["rotation"])
+	}
+	rotVal := rot["value"].(map[string]interface{})
+	if rotVal["intervalType"] != "Week" {
+		t.Errorf("intervalType = %v", rotVal["intervalType"])
+	}
+	countEnv, _ := rotVal["intervalCount"].(map[string]interface{})
+	if countEnv == nil || countEnv["_type"] != "PositiveNumber" {
+		t.Errorf("intervalCount envelope missing: %v", rotVal["intervalCount"])
+	}
+
+	restr, ok := createBody["restrictionTimes"].(map[string]interface{})
+	if !ok || restr["_type"] != "RestrictionTimes" {
+		t.Fatalf("restrictionTimes envelope missing: %v", createBody["restrictionTimes"])
+	}
+	restrVal := restr["value"].(map[string]interface{})
+	// Preserve the upstream typo on the wire.
+	if _, ok := restrVal["restictionType"]; !ok {
+		t.Errorf("expected misspelled 'restictionType' key on wire; got %v", restrVal)
+	}
+}
+
+func TestOnCallDutyPolicyEscalationRuleUser_LifeCycle(t *testing.T) {
+	t.Parallel()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/on-call-duty-policy-escalation-rule-user":
+			data, _ := body["data"].(map[string]interface{})
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":                              "eru-1",
+				"projectId":                        data["projectId"],
+				"onCallDutyPolicyId":               data["onCallDutyPolicyId"],
+				"onCallDutyPolicyEscalationRuleId": data["onCallDutyPolicyEscalationRuleId"],
+				"userId":                           data["userId"],
+				"createdAt":                        "2024-01-01T00:00:00Z",
+				"updatedAt":                        "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id": "eru-1", "projectId": "test-project-id",
+				"onCallDutyPolicyId": "pol-1", "onCallDutyPolicyEscalationRuleId": "rule-1",
+				"userId":    "user-1",
+				"createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:OnCallDutyPolicyEscalationRuleUser", "eru")
+	resp, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"onCallDutyPolicyId":               property.New("pol-1"),
+			"onCallDutyPolicyEscalationRuleId": property.New("rule-1"),
+			"userId":                           property.New("user-1"),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if resp.ID != "eru-1" {
+		t.Errorf("ID = %q", resp.ID)
+	}
+}
+
+func TestOnCallDutyPolicyEscalationRuleTeam_LifeCycle(t *testing.T) {
+	t.Parallel()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&body)
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/api/on-call-duty-policy-escalation-rule-team":
+			data, _ := body["data"].(map[string]interface{})
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id":                              "ert-1",
+				"projectId":                        data["projectId"],
+				"onCallDutyPolicyId":               data["onCallDutyPolicyId"],
+				"onCallDutyPolicyEscalationRuleId": data["onCallDutyPolicyEscalationRuleId"],
+				"teamId":                           data["teamId"],
+				"createdAt":                        "2024-01-01T00:00:00Z",
+				"updatedAt":                        "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/get-item"):
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"_id": "ert-1", "projectId": "test-project-id",
+				"onCallDutyPolicyId": "pol-1", "onCallDutyPolicyEscalationRuleId": "rule-1",
+				"teamId":    "team-1",
+				"createdAt": "2024-01-01T00:00:00Z", "updatedAt": "2024-01-01T00:00:00Z",
+			})
+		case r.Method == http.MethodDelete:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+	s := setupTestServer(t, handler)
+
+	urn := presource.NewURN("test", "provider", "", "oneuptime:resources:OnCallDutyPolicyEscalationRuleTeam", "ert")
+	resp, err := s.Create(p.CreateRequest{
+		Urn: urn,
+		Properties: property.NewMap(map[string]property.Value{
+			"onCallDutyPolicyId":               property.New("pol-1"),
+			"onCallDutyPolicyEscalationRuleId": property.New("rule-1"),
+			"teamId":                           property.New("team-1"),
+		}),
+	})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if resp.ID != "ert-1" {
+		t.Errorf("ID = %q", resp.ID)
+	}
+}
+
 func TestTeamResource_ApiKeyHeader(t *testing.T) {
 	t.Parallel()
 

@@ -71,7 +71,9 @@ All resources (except `Project`) accept an optional `projectId` property. When o
 | `StatusPageResource` | Links a monitor or monitor group to a status page |
 | `OnCallDutyPolicyEscalationRule` | Escalation timing/order within an on-call policy |
 | `OnCallDutyPolicySchedule` | Rotation schedule within an on-call policy |
-| `OnCallDutyPolicyEscalationRuleSchedule` | Links a schedule to an escalation rule |
+| `OnCallDutyPolicyEscalationRuleSchedule` | Assigns an on-call schedule as a paging target on an escalation rule |
+| `OnCallDutyPolicyEscalationRuleUser` | Assigns a specific user as a paging target on an escalation rule |
+| `OnCallDutyPolicyEscalationRuleTeam` | Assigns a whole team as a paging target on an escalation rule |
 | `ProjectSSO`         | OIDC/SAML SSO configuration              |
 | `Domain`             | Verified email domain for SSO user matching |
 | `ProjectSsoTeam`     | Auto-assigns SSO users to a team on first login |
@@ -106,6 +108,73 @@ The provider cannot create the very first OneUptime user or the master API key; 
 3. Mint the master API key in **Project Settings → API Keys**
 4. Set `oneuptime:apiKey` in your Pulumi config (or export `ONEUPTIME_API_KEY`)
 5. Everything else — additional API keys, team membership, permissions, monitors, etc. — is declarative from here on
+
+### On-call: wiring paging targets
+
+An `OnCallDutyPolicyEscalationRule` by itself doesn't page anyone — it's just a timing/order slot. Attach at least one of the three "target" resources to it:
+
+```typescript
+import * as oneuptime from "@ottercoders/pulumi-oneuptime";
+
+const policy = new oneuptime.OnCallDutyPolicy("primary", { name: "Primary paging" });
+
+const firstRule = new oneuptime.OnCallDutyPolicyEscalationRule("first", {
+    onCallDutyPolicyId: policy.resourceId,
+    order: 1,
+    escalateAfterInMinutes: 0,
+});
+
+// Choose one or more target resources — all three can coexist on the same rule.
+new oneuptime.OnCallDutyPolicyEscalationRuleUser("oncall-user", {
+    onCallDutyPolicyId: policy.resourceId,
+    onCallDutyPolicyEscalationRuleId: firstRule.resourceId,
+    userId: primaryOncallUserId,
+});
+
+new oneuptime.OnCallDutyPolicyEscalationRuleTeam("oncall-team", {
+    onCallDutyPolicyId: policy.resourceId,
+    onCallDutyPolicyEscalationRuleId: firstRule.resourceId,
+    teamId: sreTeamId,
+});
+
+new oneuptime.OnCallDutyPolicyEscalationRuleSchedule("oncall-sched", {
+    onCallDutyPolicyId: policy.resourceId,
+    onCallDutyPolicyEscalationRuleId: firstRule.resourceId,
+    onCallDutyPolicyScheduleId: rotationScheduleId,
+});
+```
+
+#### On-call schedule layers with typed rotation
+
+`OnCallScheduleLayer.rotation` and `.restrictionTimes` are typed — you don't need to hand-build the OneUptime envelope JSON:
+
+```typescript
+new oneuptime.OnCallScheduleLayer("weekly-primary", {
+    onCallDutyPolicyScheduleId: scheduleId,
+    name: "Weekly primary",
+    order: 1,
+    startsAt: "2026-01-06T00:00:00Z",
+    handOffTime: "2026-01-13T00:00:00Z",
+    rotation: { intervalType: "Week", intervalCount: 1 },
+    restrictionTimes: {
+        restrictionType: "Weekly",
+        weeklyRestrictionTimes: [{
+            startDay: "Monday", endDay: "Friday",
+            startTime: "09:00", endTime: "17:00",
+        }],
+    },
+});
+```
+
+### Workflows
+
+`Workflow.graph` is a free-form JSON object — OneUptime intentionally doesn't expose a typed schema for it (see the comment in `Common/Models/DatabaseModels/Workflow.ts`: "Ideally, create this via UI and not via API"). The recommended flow is:
+
+1. Build and test the workflow in the OneUptime UI.
+2. Export its graph JSON (from the UI or by reading the record via the API).
+3. Paste that JSON into the `graph` field of a Pulumi `Workflow` resource.
+
+This keeps the declarative boundary aligned with OneUptime's own guidance and avoids a schema that would drift on every upstream release.
 
 ### Default resources — look up, don't create
 
