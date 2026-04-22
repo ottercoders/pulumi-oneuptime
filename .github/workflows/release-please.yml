@@ -51,7 +51,7 @@ jobs:
           GORELEASER_CURRENT_TAG: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Upload provider binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: provider-binaries
           path: dist/*.tar.gz
@@ -118,7 +118,7 @@ jobs:
         run: npm publish
 
       - name: Upload npm artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-package
           path: sdk/nodejs/nodejs/bin/*.tgz
@@ -176,7 +176,7 @@ jobs:
           packages-dir: sdk/python/python/dist/
 
       - name: Upload PyPI artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pypi-package
           path: sdk/python/python/dist/*
