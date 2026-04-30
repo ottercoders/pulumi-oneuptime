@@ -78,6 +78,8 @@ func Provider() p.Provider {
 			infer.Resource[*resources.WorkflowVariable, resources.WorkflowVariableArgs, resources.WorkflowVariableState](&resources.WorkflowVariable{}),
 			infer.Resource[*resources.TelemetryIngestionKey, resources.TelemetryIngestionKeyArgs, resources.TelemetryIngestionKeyState](&resources.TelemetryIngestionKey{}),
 			infer.Resource[*resources.ScheduledMaintenanceTeamOwner, resources.ScheduledMaintenanceTeamOwnerArgs, resources.ScheduledMaintenanceTeamOwnerState](&resources.ScheduledMaintenanceTeamOwner{}),
+			// Project-level outbound SMTP config
+			infer.Resource[*resources.ProjectSmtpConfig, resources.ProjectSmtpConfigArgs, resources.ProjectSmtpConfigState](&resources.ProjectSmtpConfig{}),
 		).
 		WithFunctions(
 			infer.Function[*resources.GetMonitorStatus, resources.GetMonitorStatusArgs, resources.GetMonitorStatusResult](&resources.GetMonitorStatus{}),
