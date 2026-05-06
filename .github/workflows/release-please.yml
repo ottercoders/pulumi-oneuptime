@@ -73,7 +73,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           pulumi-version: latest
 
@@ -140,7 +140,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           pulumi-version: latest
 
@@ -195,7 +195,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
         with:
           pulumi-version: latest
 
